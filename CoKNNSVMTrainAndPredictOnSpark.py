@@ -4,6 +4,7 @@ from pyspark import SparkContext
 import CoKNNSVMTrainAndPredictOnSpark as ckstapos
 import Co_KNN_SVM
 
+
 class CoKNNSVMTrainAndPredictOnSpark:
     def __init__(self, filepath, savepath):
         """
@@ -20,6 +21,7 @@ class CoKNNSVMTrainAndPredictOnSpark:
         """
         sc = SparkContext(master="local[2]", appName="CoKNNSVMTrainAndPredictOnSpark")
         features = sc.textFile(self.__filepath)
+
         def getmodelandaccuary(line):
             """
             训练模型，预测结果
@@ -30,19 +32,22 @@ class CoKNNSVMTrainAndPredictOnSpark:
             train_x = []
             test_y = []
             test_x = []
-            for i in range(0,len(line)-1):
+            for i in range(0, len(line) - 1):
                 y, x = svmutil.svm_read_problem(line[i])
                 train_y.extend(y[0:60])
                 train_x.extend(x[0:60])
                 test_y.extend(y[60:300])
                 test_x.extend(x[60:300])
             Co_KNN_SVM.co_knn_svm(train_y, train_x, test_y, test_x)
-            #print(train_x[0][1])
-            #m = svmutil.svm_train(train_y, train_x, "-s 0 -t 2 -c 32 -g 16 -b 1")
-            #predict_label, accuary, prob_estimates = svmutil.svm_predict(test_y, test_x, m, '-b 1')
-            #return accuary
-        #features.map(lambda x:x.split(" ")).map(getmodelandaccuary).repartition(1).saveAsTextFile(self.__savepath)
+            # print(train_x[0][1])
+            # m = svmutil.svm_train(train_y, train_x, "-s 0 -t 2 -c 32 -g 16 -b 1")
+            # predict_label, accuary, prob_estimates = svmutil.svm_predict(test_y, test_x, m, '-b 1')
+            # return accuary
+
+        # features.map(lambda x:x.split(" ")).map(getmodelandaccuary).repartition(1).saveAsTextFile(self.__savepath)
         features.map(lambda x: x.split(" ")).map(getmodelandaccuary).repartition(1).count()
+
+
 if __name__ == '__main__':
     ckstapos.CoKNNSVMTrainAndPredictOnSpark("hdfs://sunbite-computer:9000/filepath/filepath320240.txt",
-                                         "/home/sunbite/accuary").CoKNNSVMTrainAndPredictOnSpark()
+                                            "/home/sunbite/accuary").CoKNNSVMTrainAndPredictOnSpark()
