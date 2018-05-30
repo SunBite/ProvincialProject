@@ -2,6 +2,7 @@
 import svmutil
 from pyspark import SparkContext
 import SVMTrainAndPredictOnSpark as stapos
+import random
 
 class SVMTrainAndPredictOnSpark:
     def __init__(self, filepath, savepath):
@@ -31,13 +32,20 @@ class SVMTrainAndPredictOnSpark:
             test_x = []
             for i in range(0,len(line)-1):
                 y, x = svmutil.svm_read_problem(line[i])
-                train_y.extend(y[0:240])
-                train_x.extend(x[0:240])
-                test_y.extend(y[200:300])
-                test_x.extend(x[200:300])
-            print(train_x[0])
-            m = svmutil.svm_train(train_y, train_x, "-s 0 -t 2 -c 32 -g 8 -b 1")
-            predict_label, accuary, prob_estimates = svmutil.svm_predict(test_y, test_x, m, '-b 1')
+                train_y.extend(y[0:270])
+                train_x.extend(x[0:270])
+                test_y.extend(y[265:300])
+                test_x.extend(x[265:300])
+            train_random_index = [i for i in range(len(train_y))]
+            test_random_index = [i for i in range(len(test_y))]
+            random.shuffle(train_random_index)
+            random.shuffle(test_random_index)
+            random_train_y = [train_y[x] for x in train_random_index]
+            random_train_x = [train_x[x] for x in train_random_index]
+            random_test_y = [test_y[x] for x in test_random_index]
+            random_test_x = [test_x[x] for x in test_random_index]
+            m = svmutil.svm_train(random_train_y, random_train_x, "-s 0 -t 2 -c 32 -g 8 -b 1")
+            predict_label, accuary, prob_estimates = svmutil.svm_predict(random_test_y, random_test_x, m, '-b 1')
             return accuary
         #features.map(lambda x:x.split(" ")).map(getmodelandaccuary).repartition(1).saveAsTextFile(self.__savepath)
         features.map(lambda x: x.split(" ")).map(getmodelandaccuary).repartition(1).count()

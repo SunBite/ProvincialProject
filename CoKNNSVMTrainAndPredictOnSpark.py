@@ -3,6 +3,7 @@ import svmutil
 from pyspark import SparkContext
 import CoKNNSVMTrainAndPredictOnSpark as ckstapos
 import Co_KNN_SVM
+import random
 
 
 class CoKNNSVMTrainAndPredictOnSpark:
@@ -38,7 +39,15 @@ class CoKNNSVMTrainAndPredictOnSpark:
                 train_x.extend(x[0:60])
                 test_y.extend(y[60:300])
                 test_x.extend(x[60:300])
-            Co_KNN_SVM.co_knn_svm(train_y, train_x, test_y, test_x)
+            train_random_index = [i for i in range(len(train_y))]
+            test_random_index = [i for i in range(len(test_y))]
+            random.shuffle(train_random_index)
+            random.shuffle(test_random_index)
+            random_train_y = [train_y[x] for x in train_random_index]
+            random_train_x = [train_x[x] for x in train_random_index]
+            random_test_y = [test_y[x] for x in test_random_index]
+            random_test_x = [test_x[x] for x in test_random_index]
+            Co_KNN_SVM.co_knn_svm(random_train_y, random_train_x, random_test_y, random_test_x)
             # print(train_x[0][1])
             # m = svmutil.svm_train(train_y, train_x, "-s 0 -t 2 -c 32 -g 16 -b 1")
             # predict_label, accuary, prob_estimates = svmutil.svm_predict(test_y, test_x, m, '-b 1')
@@ -49,5 +58,5 @@ class CoKNNSVMTrainAndPredictOnSpark:
 
 
 if __name__ == '__main__':
-    ckstapos.CoKNNSVMTrainAndPredictOnSpark("hdfs://sunbite-computer:9000/filepath/filepath320240.txt",
+    ckstapos.CoKNNSVMTrainAndPredictOnSpark("hdfs://sunbite-computer:9000/filepath/filepath320240-366.txt",
                                             "/home/sunbite/accuary").CoKNNSVMTrainAndPredictOnSpark()

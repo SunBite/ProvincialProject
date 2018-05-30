@@ -28,8 +28,7 @@ class VideoSparkStreamingConsumer:
         """
         保存关键帧
         """
-        sc = SparkContext(master="local[2]",
-                          appName="VideoSparkStreamingConsumer")
+        sc = SparkContext(appName="VideoSparkStreamingConsumer")
         ssc = StreamingContext(sc, 2)
         messages = KafkaUtils.createDirectStream(ssc=ssc, topics=self.__topicname,
                                                  kafkaParams={"metadata.broker.list":self.__brokerlist})
@@ -80,5 +79,6 @@ class VideoSparkStreamingConsumer:
 
 
 if __name__ == '__main__':
-    vssc = VideoSparkStreamingConsumer(savepath="hdfs://sunbite-computer:9000/keyframe320240/keyframe-walking/keyframe-walking", topicname=r"test", brokerlist="10.3.11.131:9092")
+    vssc = VideoSparkStreamingConsumer(savepath="hdfs://sunbite-computer:9000/keyframe320240-366/keyframe-walking/keyframe-walking", topicname=r"test", brokerlist="10.3.11.131:9092")
+    #vssc = VideoSparkStreamingConsumer(savepath="file:/home/sunbite/keyframe320240/keyframe-walking/keyframe-walking", topicname=r"test", brokerlist="10.3.11.131:9092")
     vssc.savekeyframe()

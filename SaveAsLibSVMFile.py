@@ -32,6 +32,11 @@ class SaveAsLibSVMFile:
         TOTALFEATUREANDLABEL = sc.accumulator([], ListParamForLabeledPoint())
 
         def codechange(line):
+            """
+            根据“_v”切分出类别信息
+            :param line:关键帧的特征
+            :return: （类别号，特征）
+            """
             classname = os.path.basename(line[0]).split("_v")[0]
             classnum = self.__classmap[classname]
             # ResultIterable = list(line[1])
@@ -40,6 +45,11 @@ class SaveAsLibSVMFile:
             return (classnum, list(line[1]))
 
         def getfeaturesandlabel(line):
+            """
+            返回LabeledPoint类型的标签和特征组合
+            :param line:（类别号，特征）
+            :return:返回LabeledPoint类型的标签和特征组合
+            """
             #global TOTALFEATUREANDLABEL
             return LabeledPoint(line[0], Vectors.dense(line[1]))
             #TOTALFEATUREANDLABEL += [LabeledPoint(line[0], Vectors.dense(line[1]))]
@@ -56,5 +66,7 @@ if __name__ == '__main__':
                  "tennis_swing", "trampoline_jumping", "volleyball_spiking", "walking"]
     for i in classname:
         print(i)
-        salf.SaveAsLibSVMFile("hdfs://sunbite-computer:9000/features320240-122/features-" + i,
-                              "/home/sunbite/libsvmfile320240-122/" + i).saveaslibSVMfile()
+        #salf.SaveAsLibSVMFile("hdfs://sunbite-computer:9000/features320240-366/features-" + i,
+        #                      "/home/sunbite/libsvmfile320240-366/" + i).saveaslibSVMfile()
+        salf.SaveAsLibSVMFile("file:/home/sunbite/features320240-366/features-" + i,
+                              "file:/home/sunbite/libsvmfile320240-366/" + i).saveaslibSVMfile()

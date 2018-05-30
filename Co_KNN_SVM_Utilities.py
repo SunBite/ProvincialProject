@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
+
+from __future__ import print_function
 import numpy as np
 from collections import Counter
+from sklearn.neighbors import KNeighborsClassifier
 
 
 def knn(trainImages, trainLabels, testImages, testLabels, K):
@@ -30,6 +33,14 @@ def knn(trainImages, trainLabels, testImages, testLabels, K):
 
     return testResults, accuary, Confidence
 
+def knn_sklearn(train_X, train_Y, test_X, test_Y, K):
+    knn = KNeighborsClassifier(n_neighbors = K,weights='distance')
+    knn.fit(train_X, train_Y)
+    probility = knn.predict_proba(test_X)
+    accuary = knn.score(test_X, test_Y)
+    predict_Y = knn.predict(test_X)
+
+    return predict_Y, accuary, probility
 
 def getConfidenceAndTestResults(trainImages, trainLabels, testImages, K):
     """
@@ -121,8 +132,7 @@ def getConfidence_SVM(Confidence_SVM, predict_label, temp_num, testLength):
     # 计数
     temp_label_index_SVM = 0
 
-    Confidence_SVM = np.array(Confidence_SVM)
-    ind_confidence = np.argsort(Confidence_SVM)
+    ind_confidence = np.argsort(np.array(Confidence_SVM))
     # for i in range(0, testLength):
     #     if Confidence_SVM[i] > 0:
     #         temp_label_index_SVM = temp_label_index_SVM + 1

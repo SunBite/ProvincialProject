@@ -3,8 +3,9 @@ from pyspark import SparkConf,SparkContext
 import numpy as np
 import GetFeatures
 import os
+import FeaturesExtractorOnSparkUsingGroupBy as feosgb
 
-class FeaturesExtractorOnSpark:
+class FeaturesExtractorOnSparkUsingGroupBy:
 
     def __init__(self, keyframepath, featuressavepath,resizeheight=240, resizewidth=320):
         """
@@ -37,8 +38,7 @@ class FeaturesExtractorOnSpark:
         """
         提取特征
         """
-        sc = SparkContext(master="local[2]",
-                          appName="FeaturesExtractorOnSpark"+os.path.basename(self.__featuressavepath))
+        sc = SparkContext(appName="FeaturesExtractorOnSpark"+os.path.basename(self.__featuressavepath))
         framenameandvaluerdd = sc.textFile(self.__keyframepath)
 
         def extractfeaturesfrombytes(line):
@@ -48,7 +48,10 @@ class FeaturesExtractorOnSpark:
             :param line: hdfs上的一行数据，包括关键帧的名字和关键帧de 帧list
             :return: 关键帧的名字+“ ”+该关键帧的特征
             """
-            framename = line[0]
+            framebasenamelist = os.path.basename(line[0]).split("_")
+
+            framename = os.path.dirname(line[0]) + os.sep + "_".join(framebasenamelist[:-1])
+            framenum = float(framebasenamelist[-1])
             print(framename)
             # 把ndarray.str转成ndarray.uint8
             strtouint8decoder = np.vectorize(lambda x: np.uint8(x))
@@ -67,6 +70,8 @@ class FeaturesExtractorOnSpark:
                 return my_feature_temp
 
             my_feature = getfeaturelist(my_feature)
+            # 把帧编号加入到featurelist里
+            my_feature.insert(0, framenum)
 
             return framename, my_feature
 
@@ -80,7 +85,15 @@ class FeaturesExtractorOnSpark:
             # 把帧名字加到list的第一个位置
             framename = line[0]
             ResultIterable = list(line[1])
-            my_feature = ResultIterable[0] + ResultIterable[1] + ResultIterable[2]
+            for i in range(0,len(ResultIterable)):
+                if(ResultIterable[i][0] == float(0)):
+                    my_feature_num1 = ResultIterable[i][1:]
+                elif(ResultIterable[i][0] == float(1)):
+                    my_feature_num2 = ResultIterable[i][1:]
+                elif (ResultIterable[i][0] == float(2)):
+                    my_feature_num3 = ResultIterable[i][1:]
+            #把3个关键帧的特征结合
+            my_feature = my_feature_num1 + my_feature_num2 + my_feature_num3
             print(len(my_feature))
             my_feature.insert(0, framename)
             myfeatureandname = ""
@@ -97,5 +110,11 @@ class FeaturesExtractorOnSpark:
         sc.stop()
 
 if __name__ == '__main__':
-    feos = FeaturesExtractorOnSpark("hdfs://sunbite-computer:9000/keyframe/keyframe*/part-00000","hdfs://sunbite-computer:9000/features")
-    feos.extractfeatures()
+    #feos = FeaturesExtractorOnSpark("hdfs://sunbite-computer:9000/keyframe320240-366/keyframe*/part-00000","hdfs://sunbite-computer:9000/features")
+    #feos = FeaturesExtractorOnSpark("file:/home/sunbite/keyframe320240-366/keyframe-walking/keyframe-walking*/part-00000","file:/home/sunbite/features")
+    classname = ["basketball", "biking", "diving", "golf_swing", "horse_riding", "soccer_juggling", "swing",
+                 "tennis_swing", "trampoline_jumping", "volleyball_spiking", "walking"]
+    for i in classname:
+        feosgb.FeaturesExtractorOnSparkUsingGroupBy(
+            "hdfs://sunbite-computer:9000/keyframe320240-366/keyframe-" + i + "/keyframe-" + i + "*/part-*",
+            "hdfs://sunbite-computer:9000/features320240-366/features-" + i + "/").extractfeatures()

@@ -87,7 +87,7 @@ class VideoKafkaProducer(threading.Thread):
                 framename = os.path.dirname(file) + os.sep + \
                             os.path.split(os.path.dirname(file))[1] + '_' + \
                             os.path.basename(file).split(".")[0] + \
-                            '_keyFrame' + '.jpg'
+                            '_keyFrame_' + str(keyindex)
                 # 把dtype=unit8的ndarray转换成dtype=bytes的flatten ndarray
                 currentframe = self.__unit8tobytescodechanger(currentframe)
                 #把ndarray转换成bytes

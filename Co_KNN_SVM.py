@@ -4,15 +4,17 @@ import scipy.io
 import Co_KNN_SVM_Utilities as utilities
 import svmutil
 import numpy as np
+import matplotlib.pyplot as plt
 
 def co_knn_svm(trainLabels, trainImages, testLabels, testImages):
     # 获取训练集和测试集
     # mapping = scipy.io.loadmat('pingjun_jingchenyong2_8.mat')
     # 每次迭代，选择伪标签
-    temp_num_SVM = 220
-    temp_num = 220
-    loop_num = 13
+    temp_num_SVM = 200
+    temp_num = 200
+    loop_num = 4
     K = 5  # can be any other value
+
     # KNN和SVM训练样本
 
     # train_y, train_x = svmutil.svm_read_problem("/home/sunbite/train320240")
@@ -21,7 +23,6 @@ def co_knn_svm(trainLabels, trainImages, testLabels, testImages):
     # trainLabels = train_y
     # testImages = test_x
     # testLabels = test_y
-    #
     trainImages_knn = utilities.getfeaturefromlibsvm(trainImages)
     trainLabels_knn = trainLabels.copy()
     trainImages_svm = utilities.getfeaturefromlibsvm(trainImages)
@@ -40,18 +41,26 @@ def co_knn_svm(trainLabels, trainImages, testLabels, testImages):
 
     # KNN和SVM保存准确率
     # KNN保存准确率
-    accuary_knn_list = []
+    accuracy_knn_list = []
     # SVM保存准确率
-    accuary_svm_list = []
+    accuracy_svm_list = []
 
     # 协同训练
     for h in range(1, loop_num + 1):
         # KNN计算准确率
-        testResults, accuary_knn, Confidence = utilities.knn(trainImages_knn, trainLabels_knn, testImages_knn, testLabels_knn, K)
-        accuary_knn_list.append(accuary_knn*100)
+        testResults, accuracy_knn, Confidence = utilities.knn(trainImages_knn, trainLabels_knn, testImages_knn,
+                                                             testLabels_knn, K)
+        # testResults, accuary_knn, probility = utilities.knn_sklearn(trainImages_knn.copy(), trainLabels_knn.copy(), testImages_knn.copy(), testLabels_knn.copy(), K)
+
+        # Confidence = []
+        # for i in range(0, probility.shape[0]):
+        #     temp = probility[i]
+        #     Confidence.append(utilities.sub(temp))
+
+        accuracy_knn_list.append(accuracy_knn * 100)
         print(r"预测结果(KNN)")
         print(h)
-        print(accuary_knn)
+        print(accuracy_knn)
 
         trainImages_svmforlibsvm = utilities.getfeatureforlibsvm(trainImages_svm)
         # SVM计算准确率
@@ -67,8 +76,9 @@ def co_knn_svm(trainLabels, trainImages, testLabels, testImages):
         # predict_label1, accuary1, prob_estimates1 = svmutil.svm_predict(fixed_testLabels, fixed_testImagesforlibsvm, model,
         #                                                                 '-b 1')
         testImages_svmforlibsvm = utilities.getfeatureforlibsvm(testImages_svm)
-        predict_label, accuary_svm, prob_estimates = svmutil.svm_predict(testLabels_svm, testImages_svmforlibsvm, model, '-b 1')
-        accuary_svm_list.append(accuary_svm[0])
+        predict_label, accuracy_svm, prob_estimates = svmutil.svm_predict(testLabels_svm, testImages_svmforlibsvm, model,
+                                                                         '-b 1')
+        accuracy_svm_list.append(accuracy_svm[0])
 
         testLength_svm = np.array(testImages_svm).shape[0]
         Confidence_SVM = []
@@ -156,6 +166,12 @@ def co_knn_svm(trainLabels, trainImages, testLabels, testImages):
         testImages_knn = diff_testImages_knn
         testLabels_knn = diff_testLabels_knn
     print("KNN准确率：")
-    print(accuary_knn_list)
+    print(accuracy_knn_list)
     print("SVM准确率：")
-    print(accuary_svm_list)
+    print(accuracy_svm_list)
+    plt.figure()
+    x = range(1, len(accuracy_svm_list) + 1)
+    plt.xlabel("Number of Iterations")
+    plt.ylabel("Accuracy OF CO_KNN_SVM")
+    plt.plot(x, accuracy_svm_list)
+    plt.show()
