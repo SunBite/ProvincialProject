@@ -62,9 +62,11 @@ class SaveAsLibSVMFile:
         MLUtils.saveAsLibSVMFile(featuresandlabel, self.__savepath)
         sc.stop()
 if __name__ == '__main__':
-
-
-    #salf.SaveAsLibSVMFile("hdfs://sunbite-computer:9000/features320240-366/features-" + i,
-    #                      "/home/sunbite/libsvmfile320240-366/" + i).saveaslibSVMfile()
-    salf.SaveAsLibSVMFile("file:/home/sunbite/features320240-366/features320240-366/part-*" ,
-                          "file:/home/sunbite/libsvmfile320240-366/libsvmfile320240-366").saveaslibSVMfile()
+    classname = ["basketball", "biking", "diving", "golf_swing", "horse_riding", "soccer_juggling", "swing",
+                 "tennis_swing", "trampoline_jumping", "volleyball_spiking", "walking"]
+    for i in classname:
+        print(i)
+        #salf.SaveAsLibSVMFile("hdfs://sunbite-computer:9000/features320240-366/features-" + i,
+        #                      "/home/sunbite/libsvmfile320240-366/" + i).saveaslibSVMfile()
+        salf.SaveAsLibSVMFile("file:/home/sunbite/features320240-366/features-" + i,
+                              "file:/home/sunbite/libsvmfile320240-366/" + i).saveaslibSVMfile()

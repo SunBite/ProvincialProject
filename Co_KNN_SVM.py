@@ -10,9 +10,9 @@ def co_knn_svm(trainLabels, trainImages, testLabels, testImages):
     # 获取训练集和测试集
     # mapping = scipy.io.loadmat('pingjun_jingchenyong2_8.mat')
     # 每次迭代，选择伪标签
-    temp_num_SVM = 200
-    temp_num = 200
-    loop_num = 4
+    temp_num_SVM = 300
+    temp_num = 300
+    loop_num = 6
     K = 5  # can be any other value
 
     # KNN和SVM训练样本

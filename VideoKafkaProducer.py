@@ -5,10 +5,11 @@ import os
 from kafka import KafkaProducer
 import math
 import numpy as np
+import sys
 
 class VideoKafkaProducer(threading.Thread):
 
-    def __init__(self, videopath, brokerurl, topic, resizeheight=240, resizewidth=320):
+    def __init__(self, videopath, brokerurl, topic, resizeheight=64, resizewidth=64):
         """
             初始化方法
             :param videopath: 视频输入路径
@@ -116,5 +117,6 @@ class VideoKafkaProducer(threading.Thread):
         return frame
 
 if __name__ == '__main__':
-    kafkaproducer = VideoKafkaProducer(r"/home/sunbite/video/action_youtube_naudio/walking", r"10.3.11.131:9092", r"test")
+    kafkaproducer = VideoKafkaProducer(r"/home/sunbite/video/action_youtube_naudio", r"10.3.11.131:9092", r"test")
     kafkaproducer.start()
+

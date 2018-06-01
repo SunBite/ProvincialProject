@@ -4,10 +4,11 @@ from pyspark.streaming import StreamingContext
 from pyspark.streaming.kafka import KafkaUtils
 import numpy as np
 import time
+import datetime
 
 class VideoSparkStreamingConsumer:
 
-    def __init__(self, savepath, topicname,brokerlist,resizeheight=240, resizewidth=320):
+    def __init__(self, savepath, topicname,brokerlist,resizeheight=64, resizewidth=64):
         """
         初始化方法
         :param savepath: 关键帧保存路径
@@ -28,10 +29,11 @@ class VideoSparkStreamingConsumer:
         """
         保存关键帧
         """
-        sc = SparkContext(appName="VideoSparkStreamingConsumer")
+        conf = SparkConf().set(key="spark.streaming.stopGracefullyOnShutdown", value="true")
+        sc = SparkContext(appName="VideoSparkStreamingConsumer", conf=conf)
         ssc = StreamingContext(sc, 2)
         messages = KafkaUtils.createDirectStream(ssc=ssc, topics=self.__topicname,
-                                                 kafkaParams={"metadata.broker.list":self.__brokerlist})
+                                                 kafkaParams={"metadata.broker.list": self.__brokerlist})
         # 把frame的（framename,frametobytes）存到savepath中
         def framehandler(rdd):
             if not (rdd.isEmpty()):
@@ -77,8 +79,14 @@ class VideoSparkStreamingConsumer:
         ssc.start()
         ssc.awaitTermination()
 
-
 if __name__ == '__main__':
-    vssc = VideoSparkStreamingConsumer(savepath="hdfs://sunbite-computer:9000/keyframe320240-366/keyframe-walking/keyframe-walking", topicname=r"test", brokerlist="10.3.11.131:9092")
-    #vssc = VideoSparkStreamingConsumer(savepath="file:/home/sunbite/keyframe320240/keyframe-walking/keyframe-walking", topicname=r"test", brokerlist="10.3.11.131:9092")
+    starttime = datetime.datetime.now()
+    #vssc = VideoSparkStreamingConsumer(savepath="hdfs://sunbite-computer:9000/keyframe320240-366/keyframe-walking/keyframe-walking", topicname=r"test", brokerlist="10.3.11.131:9092")
+    vssc = VideoSparkStreamingConsumer(savepath="file:/home/sunbite/keyframe6464-366-1/keyframe", topicname=r"test", brokerlist="10.3.11.131:9092")
     vssc.savekeyframe()
+    endtime = datetime.datetime.now()
+    print('----------------------------------------------------------------------------')
+    print('----------------------------------------------------------------------------')
+    print('------------VideoSparkStreamingConsumer Running time: %s Seconds------------' % (endtime - starttime).seconds)
+    print('----------------------------------------------------------------------------')
+    print('----------------------------------------------------------------------------')

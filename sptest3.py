@@ -173,12 +173,24 @@ sys.path.append("/home/sunbite/jdk1.8.0_131/bin")
 #     model = svmutil.svm_train(x[0].value, x[1].value, '-s 0 -t 2 -c 5.6569 -g 2 -b 0')
 # rdd1.map(a).map(b).collect()
 #stapos.SVMTrainAndPredictOnSpark("hdfs://sunbite-computer:9000/filepath/filepath1.txt","/home/sunbite/accuary").SVMTrainAndPredictOnSpark()
-import matplotlib.pyplot as plt
-accuary_svm_list = [45.11363636363637, 45.6198347107438, 46.81818181818182, 49.494949494949495, 53.57954545454545, 56.298701298701296, 58.71212121212121, 60.63636363636363, 64.0909090909091, 68.42105263157895, 72.74633123689728, 77.64350453172206, 81.33971291866028]
-plt.figure("ACCUARY OF CO_KNN_SVM")
-#for i in range(1,len(accuary_svm_list)):
-x=range(1,len(accuary_svm_list)+1)
-plt.xlabel("Number of Iterations")
-plt.ylabel("ACCUARY OF CO_KNN_SVM")
-plt.plot(x,accuary_svm_list)
-plt.show()
+# import matplotlib.pyplot as plt
+# accuary_svm_list = [45.11363636363637, 45.6198347107438, 46.81818181818182, 49.494949494949495, 53.57954545454545, 56.298701298701296, 58.71212121212121, 60.63636363636363, 64.0909090909091, 68.42105263157895, 72.74633123689728, 77.64350453172206, 81.33971291866028]
+# plt.figure("ACCUARY OF CO_KNN_SVM")
+# #for i in range(1,len(accuary_svm_list)):
+# x=range(1,len(accuary_svm_list)+1)
+# plt.xlabel("Number of Iterations")
+# plt.ylabel("ACCUARY OF CO_KNN_SVM")
+# plt.plot(x,accuary_svm_list)
+# plt.show()
+videopath = "/home/sunbite/video/action_youtube_naudio"
+savepath = "/home/sunbite/video/keyframe2"
+if os.path.isdir(videopath):
+    # 遍历文件夹
+    for dirpath, dirnames, filenames in os.walk(videopath):
+        for filename in filenames:
+            filepathandname = os.path.join(dirpath, filename)
+            framename = os.path.abspath(savepath) + os.sep + \
+                        os.path.basename(os.path.dirname(filepathandname))+ "_"+\
+                        os.path.basename(filepathandname).split(".")[0] + \
+                        '_keyFrame_' + '.jpg'
+            print(framename)

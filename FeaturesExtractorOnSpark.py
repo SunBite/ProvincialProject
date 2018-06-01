@@ -4,6 +4,8 @@ import numpy as np
 import GetFeatures
 import os
 import FeaturesExtractorOnSpark as feos
+import cv2
+import datetime
 
 class FeaturesExtractorOnSpark:
 
@@ -20,40 +22,26 @@ class FeaturesExtractorOnSpark:
         self.__resizeheight = resizeheight
         self.__resizewidth = resizewidth
 
-    def __bytestounit8codechanger(self, frame):
-        """
-        把dtype=bytes的flatten ndarray转换成dtype=unit8的ndarray
-        :param frame: dtype=bytes的flatten ndarray
-        :return: frame: dtype=unit8的ndarray
-        """
-        # 把ndarray.bytes转成ndarray.str
-        bytestostrdecoder = np.vectorize(lambda x: bytes.decode(x))
-        frame = bytestostrdecoder(frame)
-        # 把ndarray.str转成ndarray.uint8
-        strtouint8decoder = np.vectorize(lambda x: np.uint8(x))
-        frame = strtouint8decoder(frame)
-        return frame
-
-    def extractfeatures(self):
+    def featuresextractor(self):
         """
         提取特征
         """
-        sc = SparkContext(master="local[2]",
-                          appName="FeaturesExtractorOnSpark"+os.path.basename(self.__featuressavepath))
+        sc = SparkContext(appName="FeaturesExtractorOnSpark"+os.path.basename(self.__featuressavepath))
         framenameandvaluerdd = sc.textFile(self.__keyframepath)
 
-        def extractfeaturesfrombytes(line):
+        def extractfeatures(line):
             """
-            从hdfs上读取的数据进行编码转换，得到关键帧的名字和相应的帧list，
-            然后进行还原，然后进行特征提取
-            :param line: hdfs上的一行数据，包括关键帧的名字和关键帧de 帧list
+            读取关键帧路径，进行特征提取
+            :param line: hdfs上的一行数据，关键帧的路径
             :return: 关键帧的名字+“ ”+该关键帧的特征
             """
-            framename = line[0]
-            print(framename)
-            # 把ndarray.str转成ndarray.uint8
-            strtouint8decoder = np.vectorize(lambda x: np.uint8(x))
-            frame = strtouint8decoder(line[1])
+            framenamepath = line
+            print(framenamepath)
+            framebasenamelist = os.path.basename(framenamepath).split("_")
+
+            framename = os.path.dirname(framenamepath) + os.sep + "_".join(framebasenamelist[:-1])
+            framenum = float(framebasenamelist[-1].split(".")[0])
+            frame = cv2.imread(framenamepath)
             # reshape
             frame = np.reshape(frame, (self.__resizeheight, self.__resizewidth, 3))
             # 获取关键帧的特征
@@ -69,24 +57,50 @@ class FeaturesExtractorOnSpark:
 
             my_feature = getfeaturelist(my_feature)
             print(len(my_feature))
+            # 把帧编号加入到featurelist里
+            my_feature.insert(0, framenum)
+
+            return framename, my_feature
+        def groupbyframename(line):
+            """
+            返回关键帧名字和相应的特征
+            :param line: 关键帧的名字+“ ”+该关键帧的特征
+            :return: myfeatureandname 返回关键帧名字和相应的特征
+            """
             # 把帧名字加到list的第一个位置
-            my_feature.insert(0,framename)
+            framename = line[0]
+            ResultIterable = list(line[1])
+            for i in range(0, len(ResultIterable)):
+                if (ResultIterable[i][0] == float(0)):
+                    my_feature_num1 = ResultIterable[i][1:]
+                elif (ResultIterable[i][0] == float(1)):
+                    my_feature_num2 = ResultIterable[i][1:]
+                elif (ResultIterable[i][0] == float(2)):
+                    my_feature_num3 = ResultIterable[i][1:]
+            # 把3个关键帧的特征结合
+            my_feature = my_feature_num1 + my_feature_num2 + my_feature_num3
+            print(len(my_feature))
+            my_feature.insert(0, framename)
             myfeatureandname = ""
             # 字符串拼接：帧的名字+“ ”+ 特征
-            for i in range(0,len(my_feature)):
+            for i in range(0, len(my_feature)):
                 myfeatureandname = myfeatureandname + " " + str(my_feature[i])
             # 返回关键帧名字和相应的特征
             return myfeatureandname
         # 分割和提取关键帧
-        extractfeaturesfrombytesrdd = framenameandvaluerdd.map(lambda x: x.split(" ")).map(lambda x:(x[1],x[2:])).map(extractfeaturesfrombytes)
+        extractfeaturesfrombytesrdd = framenameandvaluerdd.map(extractfeatures).groupByKey().map(groupbyframename)
         # 保存到hdfs上
         extractfeaturesfrombytesrdd.saveAsTextFile(self.__featuressavepath)
         sc.stop()
 
 if __name__ == '__main__':
-    classname = ["basketball", "biking", "diving", "golf_swing", "horse_riding", "soccer_juggling", "swing",
-                 "tennis_swing", "trampoline_jumping", "volleyball_spiking", "walking"]
-    for i in classname:
-        feos.FeaturesExtractorOnSpark(
-            "hdfs://sunbite-computer:9000/keyframe320240/keyframe-" + i + "/keyframe-" + i + "*/part-*",
-            "file:/home/sunbite/features320240-122/features-" + i + "/").extractfeatures()
+    starttime = datetime.datetime.now()
+    feos.FeaturesExtractorOnSpark(
+        "file:/home/sunbite/keyframepath.txt",
+        "file:/home/sunbite/features320240-366/features320240-366/").featuresextractor()
+    endtime = datetime.datetime.now()
+    print('----------------------------------------------------------------------------')
+    print('----------------------------------------------------------------------------')
+    print('-------------FeaturesExtractorOnSpark Running time: %s Seconds--------------' % (endtime - starttime).seconds)
+    print('----------------------------------------------------------------------------')
+    print('----------------------------------------------------------------------------')
