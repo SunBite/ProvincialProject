@@ -23,18 +23,18 @@ def co_knn_svm(trainLabels, trainImages, testLabels, testImages):
     # trainLabels = train_y
     # testImages = test_x
     # testLabels = test_y
-    trainImages_knn = trainImages.copy()
+    trainImages_knn = utilities.getfeaturefromlibsvm(trainImages)
     trainLabels_knn = trainLabels.copy()
-    trainImages_svm = trainImages.copy()
+    trainImages_svm = utilities.getfeaturefromlibsvm(trainImages)
     trainLabels_svm = trainLabels.copy()
 
-    testImages_knn = testImages.copy()
+    testImages_knn = utilities.getfeaturefromlibsvm(testImages)
     testLabels_knn = testLabels.copy()
-    testImages_svm = testImages.copy()
+    testImages_svm = utilities.getfeaturefromlibsvm(testImages)
     testLabels_svm = testLabels.copy()
 
     # KNN和SVM用来测试的样本及测试的标签（不变）
-    fixed_testImages = testImages.copy()
+    fixed_testImages = utilities.getfeaturefromlibsvm(testImages)
     fixed_testLabels = testLabels.copy()
 
     # 迭代次数

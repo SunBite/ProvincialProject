@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from pyspark.accumulators import  AccumulatorParam
+from pyspark.accumulators import AccumulatorParam
 
 class ListParamForFeatureAndLabel(AccumulatorParam):
     def zero(self, value):

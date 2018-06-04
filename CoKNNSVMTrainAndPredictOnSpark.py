@@ -3,26 +3,45 @@ import svmutil
 from pyspark import SparkContext
 import CoKNNSVMTrainAndPredictOnSpark as ckstapos
 import Co_KNN_SVM
+import Co_KNN_SVM_Utilities
 import random
 import datetime
+import os
+from ListParam import *
 
 
 class CoKNNSVMTrainAndPredictOnSpark:
+
     def __init__(self, filepath, savepath):
         """
         初始化方法
-        :param filepath: hdfs上的要读取的features目录的目录
+        :param filepath: hdfs上的要读取的features目录
         :param savepath: 保存的地址
         """
         self.__filepath = filepath
         self.__savepath = savepath
+        self.__classmap = {"basketball": 1, "biking": 2, "diving": 3, "golf_swing": 4, "horse_riding": 5,
+                           "soccer_juggling": 6, "swing": 7, "tennis_swing": 8, "trampoline_jumping": 9,
+                           "volleyball_spiking": 10,
+                           "walking": 11}
 
     def CoKNNSVMTrainAndPredictOnSpark(self):
         """
         训练模型，预测结果
         """
+        global TOTALFEATURESANDLABEL
         sc = SparkContext(appName="CoKNNSVMTrainAndPredictOnSpark")
+        TOTALFEATURESANDLABEL = sc.accumulator([], ListParamForFeatureAndLabel())
         features = sc.textFile(self.__filepath)
+
+        def makefeatures(line):
+            """
+            根据“_v”切分出类别信息
+            :param line:关键帧的特征
+            """
+            classname = os.path.basename(line[0]).split("_v")[0]
+            classnum = self.__classmap[classname]
+            return (float(classnum), [float(x) for x in line[1]])
 
         def getmodelandaccuary(line):
             """
@@ -30,44 +49,60 @@ class CoKNNSVMTrainAndPredictOnSpark:
             :param line: hdfs上的要读取的features目录的目录
             :return: 准确率
             """
-            y, x = svmutil.svm_read_problem(line)
-            print(len(y))
-            train_y = y[0:220]
-            train_x = x[0:220]
-            test_y = y[220:1500]
-            test_x = x[220:1500]
-            # train_random_index = [i for i in range(len(train_y))]
-            # test_random_index = [i for i in range(len(test_y))]
-            # random.shuffle(train_random_index)
-            # random.shuffle(test_random_index)
-            # random_train_y = [train_y[x] for x in train_random_index]
-            # random_train_x = [train_x[x] for x in train_random_index]
-            # random_test_y = [test_y[x] for x in test_random_index]
-            # random_test_x = [test_x[x] for x in test_random_index]
-            random_train_y = train_y
-            random_train_x = train_x
-            random_test_y = test_y
-            random_test_x = test_x
-
-            Co_KNN_SVM.co_knn_svm(random_train_y, random_train_x, random_test_y, random_test_x)
-
-            # print(train_x[0][1])
-            # m = svmutil.svm_train(train_y, train_x, "-s 0 -t 2 -c 32 -g 16 -b 1")
-            # predict_label, accuary, prob_estimates = svmutil.svm_predict(test_y, test_x, m, '-b 1')
-            # return accuary
+            global TOTALFEATURESANDLABEL
+            TOTALFEATURESANDLABEL += [(line[0], line[1])]
 
         # features.map(lambda x:x.split(" ")).map(getmodelandaccuary).repartition(1).saveAsTextFile(self.__savepath)
-        features.map(getmodelandaccuary).count()
+        features.map(lambda x: x.split(" ")).map(lambda x: (x[1], x[2:])).map(makefeatures).map(
+            getmodelandaccuary).count()
+        totalfeaturesandlabel = TOTALFEATURESANDLABEL.value
+
+        def getfeaturelistandlabellist(totalfeaturesandlabel):
+            """
+            把累加器中的label和特征的元组提出来，形成标签list和featrueslist
+            :param totalfeaturesandlabel:label和特征的元组
+            :return:（标签list，featrueslist）
+            """
+            TOTALFEATURES = []
+            TOTALLABEL = []
+            for i in range(0, len(totalfeaturesandlabel)):
+                TOTALLABEL.append(totalfeaturesandlabel[i][0])
+                TOTALFEATURES.append(totalfeaturesandlabel[i][1])
+            return (TOTALLABEL, TOTALFEATURES)
+
+        totallabel, totalfeatures = getfeaturelistandlabellist(totalfeaturesandlabel)
+        y = totallabel
+        x = totalfeatures
+
+        # x = Co_KNN_SVM_Utilities.getfeatureforlibsvm(x)
+        train_y = y[0:220]
+        train_x = x[0:220]
+        test_y = y[220:1500]
+        test_x = x[220:1500]
+        # train_random_index = [i for i in range(len(train_y))]
+        # test_random_index = [i for i in range(len(test_y))]
+        # random.shuffle(train_random_index)
+        # random.shuffle(test_random_index)
+        # random_train_y = [train_y[x] for x in train_random_index]
+        # random_train_x = [train_x[x] for x in train_random_index]
+        # random_test_y = [test_y[x] for x in test_random_index]
+        # random_test_x = [test_x[x] for x in test_random_index]
+        random_train_y = train_y
+        random_train_x = train_x
+        random_test_y = test_y
+        random_test_x = test_x
+        Co_KNN_SVM.co_knn_svm(random_train_y, random_train_x, random_test_y, random_test_x)
 
 
 if __name__ == '__main__':
     starttime = datetime.datetime.now()
-    #ckstapos.CoKNNSVMTrainAndPredictOnSpark("hdfs://sunbite-computer:9000/filepath/filepath320240-366.txt",
-    ckstapos.CoKNNSVMTrainAndPredictOnSpark("file:/home/sunbite/filepath320240-366-1.txt",
+    # ckstapos.CoKNNSVMTrainAndPredictOnSpark("hdfs://sunbite-computer:9000/filepath/filepath320240-366.txt",
+    ckstapos.CoKNNSVMTrainAndPredictOnSpark("file:/home/sunbite/features320240-366/features320240-366/",
                                             "/home/sunbite/accuary").CoKNNSVMTrainAndPredictOnSpark()
     endtime = datetime.datetime.now()
     print('----------------------------------------------------------------------------')
     print('----------------------------------------------------------------------------')
-    print('----------CoKNNSVMTrainAndPredictOnSpark Running time: %s Seconds-----------' % (endtime - starttime).seconds)
+    print(
+        '----------CoKNNSVMTrainAndPredictOnSpark Running time: %s Seconds-----------' % (endtime - starttime).seconds)
     print('----------------------------------------------------------------------------')
     print('----------------------------------------------------------------------------')
