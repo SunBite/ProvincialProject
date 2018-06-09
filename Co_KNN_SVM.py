@@ -44,6 +44,8 @@ def co_knn_svm(trainLabels, trainImages, testLabels, testImages):
     accuracy_knn_list = []
     # SVM保存准确率
     accuracy_svm_list = []
+    # Co_KNN_SVM保存准确率
+    accuracy_Co_KNN_SVM_list = []
 
     # 协同训练
     for h in range(1, loop_num + 1):
@@ -58,19 +60,10 @@ def co_knn_svm(trainLabels, trainImages, testLabels, testImages):
         #     Confidence.append(utilities.sub(temp))
 
         accuracy_knn_list.append(accuracy_knn * 100)
-        print(r"预测结果(KNN)")
-        print(h)
-        print(accuracy_knn)
 
         trainImages_svmforlibsvm = utilities.getfeatureforlibsvm(trainImages_svm)
         # SVM计算准确率
         model = svmutil.svm_train(trainLabels_svm, trainImages_svmforlibsvm, '-s 0 -t 2 -c 15 -g 2 -b 1')
-        print(r"预测结果(SVM)")
-        print(h)
-        print("trainLabels_svm的长度：")
-        print(len(trainLabels_svm))
-        print("trainImages_svm的长度：")
-        print(len(trainImages_svm))
 
         # fixed_testImagesforlibsvm = utilities.getfeatureforlibsvm(fixed_testImages)
         # predict_label1, accuary1, prob_estimates1 = svmutil.svm_predict(fixed_testLabels, fixed_testImagesforlibsvm, model,
@@ -79,6 +72,7 @@ def co_knn_svm(trainLabels, trainImages, testLabels, testImages):
         predict_label, accuracy_svm, prob_estimates = svmutil.svm_predict(testLabels_svm, testImages_svmforlibsvm, model,
                                                                          '-b 1')
         accuracy_svm_list.append(accuracy_svm[0])
+        accuracy_Co_KNN_SVM_list.append(accuracy_svm[0])
 
         testLength_svm = np.array(testImages_svm).shape[0]
         Confidence_SVM = []
@@ -87,6 +81,7 @@ def co_knn_svm(trainLabels, trainImages, testLabels, testImages):
             Confidence_SVM.append(utilities.sub_SVM(temp))
 
         if h == loop_num:
+            svmutil.sa
             break
         # KNN和SVM半监督训练过程
         # ---------------------------------KNN测试样本预测和置信度计算过程 ----------------------------------
@@ -165,13 +160,11 @@ def co_knn_svm(trainLabels, trainImages, testLabels, testImages):
             diff_testLabels_knn.append(testLabels_knn[i])
         testImages_knn = diff_testImages_knn
         testLabels_knn = diff_testLabels_knn
-    print("KNN准确率：")
-    print(accuracy_knn_list)
-    print("SVM准确率：")
-    print(accuracy_svm_list)
-    plt.figure()
-    x = range(1, len(accuracy_svm_list) + 1)
-    plt.xlabel("Number of Iterations")
-    plt.ylabel("Accuracy OF CO_KNN_SVM")
-    plt.plot(x, accuracy_svm_list)
-    plt.show()
+    print("Co_KNN_SVMde 准确率：")
+    print(accuracy_Co_KNN_SVM_list)
+    # plt.figure()
+    # x = range(1, len(accuracy_svm_list) + 1)
+    # plt.xlabel("Number of Iterations")
+    # plt.ylabel("Accuracy OF CO_KNN_SVM")
+    # plt.plot(x, accuracy_svm_list)
+    # plt.show()
