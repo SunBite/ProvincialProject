@@ -4,6 +4,7 @@ from __future__ import print_function
 import numpy as np
 from collections import Counter
 from sklearn.neighbors import KNeighborsClassifier
+from sklearn.svm import SVC
 
 
 def knn(trainImages, trainLabels, testImages, testLabels, K):
@@ -33,14 +34,54 @@ def knn(trainImages, trainLabels, testImages, testLabels, K):
 
     return testResults, accuary, Confidence
 
+
 def knn_sklearn(train_X, train_Y, test_X, test_Y, K):
-    knn = KNeighborsClassifier(n_neighbors = K,weights='distance')
+    """
+    KNN计算准确率
+    :param train_X: 训练集特征
+    :param train_Y: 训练集标签
+    :param test_X: 测试集特征
+    :param test_Y: 测试集标签
+    :param K: KNN中的K
+    :return: predict_Y, accuary, probility： 预测标签，准确率，可能性
+    """
+    # knn分类器
+    knn = KNeighborsClassifier(n_neighbors=K, weights='distance')
+
+    # 训练
     knn.fit(train_X, train_Y)
+    # 获得预测可能性
     probility = knn.predict_proba(test_X)
+    # 获得准确率
     accuary = knn.score(test_X, test_Y)
+    # 获得预测标签
     predict_Y = knn.predict(test_X)
 
     return predict_Y, accuary, probility
+
+
+def svm_sklearn(train_X, train_Y, test_X, test_Y):
+    """
+    SVM计算准确率
+    :param train_X: 训练集特征
+    :param train_Y: 训练集标签
+    :param test_X: 测试集特征
+    :param test_Y: 测试集标签
+    :return: predict_Y, accuary, probility： 预测标签，准确率，可能性
+    """
+    # svm分类器
+    # 训练
+    svc = SVC(C=15, kernel='rbf', degree=3, gamma=2, probability=True)
+    svc.fit(train_X, train_Y)
+    # 获得预测可能性
+    probility = svc.predict_proba(test_X)
+    # 获得准确率
+    accuary = svc.score(test_X, test_Y)
+    # 获得预测标签
+    predict_Y = svc.predict(test_X)
+
+    return predict_Y, accuary, probility
+
 
 def getConfidenceAndTestResults(trainImages, trainLabels, testImages, K):
     """
@@ -79,202 +120,247 @@ def getConfidenceAndTestResults(trainImages, trainLabels, testImages, K):
         kinds = np.array(list(table.keys()))
         # 类别的概率
         temp = kindscounter / compLabel.size
-        Confidence.append(sub(temp))
+        Confidence.append(get_confidence_knn(temp))
         idx = np.argmax(kindscounter)
         testResults.put(i, kinds[idx])
     return (Confidence, testResults)
 
 
-def sub(temp):
+def get_confidence_knn(probility_knn):
     """
     计算KNN置信度
-    :param temp: 类别的概率
-    :return: sub_num：置信度
+    :param probility_knn: 类别的概率
+    :return: confidence_knn：置信度
     """
-    if np.size(temp) == 1:
-        sub_num = 1
+    if np.size(probility_knn) == 1:
+        confidence_knn = 1
     else:
-        temp = np.array(temp)
-        result = temp[np.argsort(-temp)]
-        sub_num = result[0] - result[1]
-        #sub_num = result[0]
+        probility_knn = np.array(probility_knn)
+        result = probility_knn[np.argsort(-probility_knn)]
+        confidence_knn = result[0] - result[1]
+        # confidence_knn = result[0]
 
-    return sub_num
+    return confidence_knn
 
 
-def sub_SVM(temp):
+def get_confidence_svm(probility_svm):
     """
     计算SVM置信度
-    :param temp: 类别的概率
-    :return: sub_num_SVM 置信度
+    :param probility_svm: 类别的概率
+    :return: confidence_svm 置信度
     """
-    if np.size(temp) == 1:
-        sub_num_SVM = 1
+    if np.size(probility_svm) == 1:
+        confidence_svm = 1
     else:
-        temp = np.array(temp)
-        result = temp[np.argsort(-temp)]
-        sub_num_SVM = result[0] - result[1]
-        #sub_num_SVM = result[0]
-    return sub_num_SVM
+        probility_svm = np.array(probility_svm)
+        result = probility_svm[np.argsort(-probility_svm)]
+        confidence_svm = result[0] - result[1]
+        # confidence_svm = result[0]
+    return confidence_svm
 
 
-def getConfidence_SVM(Confidence_SVM, predict_label, temp_num, testLength):
+def get_confidence_svm_index(confidence_svm_list, predict_Y_svm, predict_Y_knn, temp_num_svm):
     """
-    获取SVM置信度
-    :param Confidence_SVM:
-    :param predict_label:
-    :param temp_num:
-    :param testLength:
+    获取SVM置信度较高的索引
+    :param confidence_svm_list:
+    :param predict_Y_svm:
+    :param predict_Y_knn:
+    :param temp_num_svm:
     :return:
     """
-    # 保存置信度大于0.9的索引值
-    temp_label_SVM = []
-    # 计数
-    temp_label_index_SVM = 0
+    average = int(temp_num_svm / 11)
+    average = int(1)
+    index_svm_label_high_confidence = []
+    for i in range(1, 11 + 1):
+        # 获得knn和svm所预测的在每个类别中的相同标签的索引
+        index_same_predictLabel_list = get_same_predictLabel_index_for_each(predict_Y_knn, predict_Y_svm, i)
+        # 获得两个分类器所预测的相同标签的对应的置信度
+        confidence_svm_same_predictLabel_list = []
+        for j in index_same_predictLabel_list:
+            confidence_svm_same_predictLabel_list.append(confidence_svm_list[j])
+        # 置信度降序排列
+        ind_confidence = np.argsort(-np.array(confidence_svm_same_predictLabel_list))
+        a = np.array(confidence_svm_same_predictLabel_list)
+        b = a[ind_confidence]
+        if len(index_same_predictLabel_list) > average:
+            top_N = average
+        else:
+            top_N = len(index_same_predictLabel_list)
+        index_same_predictLabel_list = np.array(index_same_predictLabel_list)
+        # 按照置信度降序得到相应的排序索引
+        index_same_predictLabel_sort_list = index_same_predictLabel_list[ind_confidence]
+        # 取前top_N个索引
+        index_same_predictLabel_sort_top_list = index_same_predictLabel_sort_list.take(np.arange(0, top_N))
+        # 添加到要返回的具有高置信度索引的list
+        index_svm_label_high_confidence.extend(index_same_predictLabel_sort_top_list.tolist())
+        # index_svm_label_high_confidence.extend(index_same_predictLabel_list.tolist())
+    # print(len(index_svm_label_high_confidence))
+    # index_same_predictLabel_list = get_same_predictLabel_index(predict_Y_svm, predict_Y_knn)
+    # confidence_svm_same_predictLabel_list = []
+    # for i in index_same_predictLabel_list:
+    #     confidence_svm_same_predictLabel_list.append(confidence_svm_list[i])
+    # ind_confidence = np.argsort(-np.array(confidence_svm_same_predictLabel_list))
+    # index_svm_label_high_confidence = ind_confidence.take(np.arange(0, temp_num_svm))
 
-    ind_confidence = np.argsort(np.array(Confidence_SVM))
-    # for i in range(0, testLength):
-    #     if Confidence_SVM[i] > 0:
-    #         temp_label_index_SVM = temp_label_index_SVM + 1
-    #         temp_label_SVM[temp_label_index_SVM] = i
-    temp_label_SVM = ind_confidence
-    # svm_label代表的是索引号temp_label所处位置的标签
-    svm_label = []
-    for i in temp_label_SVM:
-        svm_label.append(predict_label[i])
-
-    num1 = 0
-    num2 = 0
-    num3 = 0
-    num4 = 0
-    num5 = 0
-    num6 = 0
-    num7 = 0
-    num8 = 0
-    num9 = 0
-    num10 = 0
-    num11 = 0
-    average = temp_num / 11
-    temp_label_index = 0
-    total = np.array(temp_label_SVM).shape[0]
-
-    index_label_SVM = []
-
-    # for i in range(0,temp_num):
-    #     index_label_SVM.append(temp_label_SVM[i])
-
-    for j in range(0, total):
-        if (svm_label[j] == 1) and (num1 < average):
-            index_label_SVM.append(temp_label_SVM[j])
-            num1 = num1 + 1
-        elif (svm_label[j] == 2) and (num2 < average):
-            index_label_SVM.append(temp_label_SVM[j])
-            num2 = num2 + 1
-        elif (svm_label[j] == 3) and (num3 < average):
-            index_label_SVM.append(temp_label_SVM[j])
-            num3 = num3 + 1
-        elif (svm_label[j] == 4) and (num4 < average):
-            index_label_SVM.append(temp_label_SVM[j])
-            num4 = num4 + 1
-        elif (svm_label[j] == 5) and (num5 < average):
-            index_label_SVM.append(temp_label_SVM[j])
-            num5 = num5 + 1
-        elif (svm_label[j] == 6) and (num6 < average):
-            index_label_SVM.append(temp_label_SVM[j])
-            num6 = num6 + 1
-        elif (svm_label[j] == 7) and (num7 < average):
-            index_label_SVM.append(temp_label_SVM[j])
-            num7 = num7 + 1
-        elif (svm_label[j] == 8) and (num8 < average):
-            index_label_SVM.append(temp_label_SVM[j])
-            num8 = num8 + 1
-        elif (svm_label[j] == 9) and (num9 < average):
-            index_label_SVM.append(temp_label_SVM[j])
-            num9 = num9 + 1
-        elif (svm_label[j] == 10) and (num10 < average):
-            index_label_SVM.append(temp_label_SVM[j])
-            num10 = num10 + 1
-        elif (svm_label[j] == 11) and (num11 < average):
-            index_label_SVM.append(temp_label_SVM[j])
-            num11 = num11 + 1
-
-        if (np.array(index_label_SVM).shape[0] == temp_num):
-            break
-    return index_label_SVM
+    # # svm_label_high_confidence代表的是索引号ind_confidence所处位置的标签
+    # predict_Y_svm = np.array(predict_Y_svm)
+    # svm_label_high_confidence = predict_Y_svm[ind_confidence]
+    # num1 = 0
+    # num2 = 0
+    # num3 = 0
+    # num4 = 0
+    # num5 = 0
+    # num6 = 0
+    # num7 = 0
+    # num8 = 0
+    # num9 = 0
+    # num10 = 0
+    # num11 = 0
+    # average = temp_num_svm / 11
+    # total = np.array(ind_confidence).shape[0]
+    #
+    # index_svm_label_high_confidence = []
+    #
+    # for j in range(0, total):
+    #     if (int(svm_label_high_confidence[j]) == 1) and (num1 < average):
+    #         index_svm_label_high_confidence.append(ind_confidence[j])
+    #         num1 = num1 + 1
+    #     elif (int(svm_label_high_confidence[j]) == 2) and (num2 < average):
+    #         index_svm_label_high_confidence.append(ind_confidence[j])
+    #         num2 = num2 + 1
+    #     elif (int(svm_label_high_confidence[j]) == 3) and (num3 < average):
+    #         index_svm_label_high_confidence.append(ind_confidence[j])
+    #         num3 = num3 + 1
+    #     elif (int(svm_label_high_confidence[j]) == 4) and (num4 < average):
+    #         index_svm_label_high_confidence.append(ind_confidence[j])
+    #         num4 = num4 + 1
+    #     elif (int(svm_label_high_confidence[j]) == 5) and (num5 < average):
+    #         index_svm_label_high_confidence.append(ind_confidence[j])
+    #         num5 = num5 + 1
+    #     elif (int(svm_label_high_confidence[j]) == 6) and (num6 < average):
+    #         index_svm_label_high_confidence.append(ind_confidence[j])
+    #         num6 = num6 + 1
+    #     elif (int(svm_label_high_confidence[j]) == 7) and (num7 < average):
+    #         index_svm_label_high_confidence.append(ind_confidence[j])
+    #         num7 = num7 + 1
+    #     elif (int(svm_label_high_confidence[j]) == 8) and (num8 < average):
+    #         index_svm_label_high_confidence.append(ind_confidence[j])
+    #         num8 = num8 + 1
+    #     elif (int(svm_label_high_confidence[j]) == 9) and (num9 < average):
+    #         index_svm_label_high_confidence.append(ind_confidence[j])
+    #         num9 = num9 + 1
+    #     elif (int(svm_label_high_confidence[j]) == 10) and (num10 < average):
+    #         index_svm_label_high_confidence.append(ind_confidence[j])
+    #         num10 = num10 + 1
+    #     elif (int(svm_label_high_confidence[j]) == 11) and (num11 < average):
+    #         index_svm_label_high_confidence.append(ind_confidence[j])
+    #         num11 = num11 + 1
+    #
+    #     if len(index_svm_label_high_confidence) == temp_num_svm:
+    #         break
+    return index_svm_label_high_confidence
 
 
-def getConfidence(Confidence, testResults, temp_num):
+def get_confidence_knn_index(confidence_knn_list, predict_Y_svm, predict_Y_knn, temp_num_knn):
     """
-    从被预测的伪标签中选择200个置信度高的测试样本，每类20个（temp_num/10）
-    :param Confidence:
-    :param testResults:
-    :param temp_num:
+    获取KNN置信度较高的索引
+    :param confidence_knn_list:
+    :param predict_Y_svm:
+    :param predict_Y_knn:
+    :param temp_num_knn:
     :return:
     """
-    total = np.array(Confidence).shape[0]
-    # 保存200个索引号
-    temp_label = []
-    # 根据置信度排序 ind_confidence表示索引号
-    ind_confidence = np.argsort(np.array(Confidence))
-    # 每一个索引对应的预测标签
-    temp_total = []
-    for i in ind_confidence:
-        temp_total.append(testResults[i])
-    num1 = 0
-    num2 = 0
-    num3 = 0
-    num4 = 0
-    num5 = 0
-    num6 = 0
-    num7 = 0
-    num8 = 0
-    num9 = 0
-    num10 = 0
-    num11 = 0
-    average = temp_num / 11
-    # for i in range(0,temp_num):
-    #     temp_label.append(ind_confidence[i])
-    for j in range(0, total):
-        if (temp_total[j] == 1) and (num1 < average):
-            temp_label.append(ind_confidence[j])
-            num1 = num1 + 1
-        elif (temp_total[j] == 2) and (num2 < average):
-            temp_label.append(ind_confidence[j])
-            num2 = num2 + 1
-        elif (temp_total[j] == 3) and (num3 < average):
-            temp_label.append(ind_confidence[j])
-            num3 = num3 + 1
-        elif (temp_total[j] == 4) and (num4 < average):
-            temp_label.append(ind_confidence[j])
-            num4 = num4 + 1
-        elif (temp_total[j] == 5) and (num5 < average):
-            temp_label.append(ind_confidence[j])
-            num5 = num5 + 1
-        elif (temp_total[j] == 6) and (num6 < average):
-            temp_label.append(ind_confidence[j])
-            num6 = num6 + 1
-        elif (temp_total[j] == 7) and (num7 < average):
-            temp_label.append(ind_confidence[j])
-            num7 = num7 + 1
-        elif (temp_total[j] == 8) and (num8 < average):
-            temp_label.append(ind_confidence[j])
-            num8 = num8 + 1
-        elif (temp_total[j] == 9) and (num9 < average):
-            temp_label.append(ind_confidence[j])
-            num9 = num9 + 1
-        elif (temp_total[j] == 10) and (num10 < average):
-            temp_label.append(ind_confidence[j])
-            num10 = num10 + 1
-        elif (temp_total[j] == 11) and (num11 < average):
-            temp_label.append(ind_confidence[j])
-            num11 = num11 + 1
+    average = int(temp_num_knn / 11)
+    average = int(1)
+    index_knn_label_high_confidence = []
+    for i in range(1, 11 + 1):
+        # 获得knn和svm所预测的在每个类别中的相同标签的索引
+        index_same_predictLabel_list = get_same_predictLabel_index_for_each(predict_Y_knn, predict_Y_svm, i)
+        # 获得两个分类器所预测的相同标签的对应的置信度
+        confidence_knn_same_predictLabel_list = []
+        for j in index_same_predictLabel_list:
+            confidence_knn_same_predictLabel_list.append(confidence_knn_list[j])
+        # 置信度降序排列
+        ind_confidence = np.argsort(-np.array(confidence_knn_same_predictLabel_list))
+        if len(index_same_predictLabel_list) > average:
+            top_N = average
+        else:
+            top_N = len(index_same_predictLabel_list)
+        index_same_predictLabel_list = np.array(index_same_predictLabel_list)
+        # 按照置信度降序得到相应的排序索引
+        index_same_predictLabel_sort_list = index_same_predictLabel_list[ind_confidence]
+        # 取前top_N个索引
+        index_same_predictLabel_sort_top_list = index_same_predictLabel_sort_list.take(np.arange(0, top_N))
+        # 添加到要返回的具有高置信度索引的list
+        index_knn_label_high_confidence.extend(index_same_predictLabel_sort_top_list.tolist())
+    # print(len(index_knn_label_high_confidence))
+    # index_same_predictLabel_list = get_same_predictLabel_index(predict_Y_svm, predict_Y_knn)
+    # confidence_knn_same_predictLabel_list = []
+    # for i in index_same_predictLabel_list:
+    #     confidence_knn_same_predictLabel_list.append(confidence_knn_list[i])
+    # ind_confidence = np.argsort(-np.array(confidence_knn_same_predictLabel_list))
+    # index_knn_label_high_confidence = ind_confidence.take(np.arange(0, temp_num_knn))
+    # total = np.array(confidence_knn_list).shape[0]
+    # index_knn_label_high_confidence = []
+    # # 根据置信度排序 ind_confidence表示索引号
+    # ind_confidence = np.argsort(np.array(confidence_knn_list))
+    # # 每一个索引对应的预测标签
+    # predict_Y_knn = np.array(predict_Y_knn)
+    # knn_label_high_confidence = predict_Y_knn[ind_confidence]
+    #
+    # num1 = 0
+    # num2 = 0
+    # num3 = 0
+    # num4 = 0
+    # num5 = 0
+    # num6 = 0
+    # num7 = 0
+    # num8 = 0
+    # num9 = 0
+    # num10 = 0
+    # num11 = 0
+    # average = temp_num_knn / 11
+    # for j in range(0, total):
+    #     if (int(knn_label_high_confidence[j]) == 1) and (num1 < average):
+    #         index_knn_label_high_confidence.append(ind_confidence[j])
+    #         num1 = num1 + 1
+    #     elif (int(knn_label_high_confidence[j]) == 2) and (num2 < average):
+    #         index_knn_label_high_confidence.append(ind_confidence[j])
+    #         num2 = num2 + 1
+    #     elif (int(knn_label_high_confidence[j]) == 3) and (num3 < average):
+    #         index_knn_label_high_confidence.append(ind_confidence[j])
+    #         num3 = num3 + 1
+    #     elif (int(knn_label_high_confidence[j]) == 4) and (num4 < average):
+    #         index_knn_label_high_confidence.append(ind_confidence[j])
+    #         num4 = num4 + 1
+    #     elif (int(knn_label_high_confidence[j]) == 5) and (num5 < average):
+    #         index_knn_label_high_confidence.append(ind_confidence[j])
+    #         num5 = num5 + 1
+    #     elif (int(knn_label_high_confidence[j]) == 6) and (num6 < average):
+    #         index_knn_label_high_confidence.append(ind_confidence[j])
+    #         num6 = num6 + 1
+    #     elif (int(knn_label_high_confidence[j]) == 7) and (num7 < average):
+    #         index_knn_label_high_confidence.append(ind_confidence[j])
+    #         num7 = num7 + 1
+    #     elif (int(knn_label_high_confidence[j]) == 8) and (num8 < average):
+    #         index_knn_label_high_confidence.append(ind_confidence[j])
+    #         num8 = num8 + 1
+    #     elif (int(knn_label_high_confidence[j]) == 9) and (num9 < average):
+    #         index_knn_label_high_confidence.append(ind_confidence[j])
+    #         num9 = num9 + 1
+    #     elif (int(knn_label_high_confidence[j]) == 10) and (num10 < average):
+    #         index_knn_label_high_confidence.append(ind_confidence[j])
+    #         num10 = num10 + 1
+    #     elif (int(knn_label_high_confidence[j]) == 11) and (num11 < average):
+    #         index_knn_label_high_confidence.append(ind_confidence[j])
+    #         num11 = num11 + 1
+    #
+    #     if len(index_knn_label_high_confidence) == temp_num_knn:
+    #         break
+    return index_knn_label_high_confidence
 
-        if (np.array(temp_label).shape[0] == temp_num):
-            break
-    return temp_label
 
-
-def getfeatureforlibsvm(featurevalue):
+def get_feature_for_libsvm(featurevalue):
     """
     把常规的特征list转换成libsvm需要的特征
     :param featurevalue: 常规的特征list
@@ -289,7 +375,7 @@ def getfeatureforlibsvm(featurevalue):
     return featuredictlist
 
 
-def getfeaturefromlibsvm(featuredictlist):
+def get_feature_from_libsvm(featuredictlist):
     """
     返回特征list
     :param featuredictlist: libsvm的feature形式
@@ -302,3 +388,73 @@ def getfeaturefromlibsvm(featuredictlist):
             featurelist.append(featuredictlist[i][j])
         featurelists.append(featurelist)
     return featurelists
+
+
+def get_same_predictLabel_index(predict_Y_knn, predict_Y_svm):
+    """
+    获得knn和svm的预测标签相同的索引
+    :param predict_Y_knn: knn的预测标签
+    :param predict_Y_svm: svm的预测标签
+    :return:index_same_predictLabel_list knn和svm的预测标签相同的索引list
+    """
+    index_same_predictLabel_list = []
+    if len(predict_Y_knn) == len(predict_Y_svm):
+        for i in range(len(predict_Y_knn)):
+            if predict_Y_knn[i] == predict_Y_svm[i]:
+                index_same_predictLabel_list.append(i)
+        return index_same_predictLabel_list
+    else:
+        return index_same_predictLabel_list
+
+
+def get_same_predictLabel_index_for_each(predict_Y_knn, predict_Y_svm, k):
+    """
+    获得knn和svm的预测标签相同的索引
+    :param predict_Y_knn: knn的预测标签
+    :param predict_Y_svm: svm的预测标签
+    :param k: 标签
+    :return:index_same_predictLabel_list knn和svm的预测标签相同的索引list
+    """
+    index_same_predictLabel_list = []
+    # if len(predict_Y_knn) == len(predict_Y_svm):
+    if len(predict_Y_knn) > len(predict_Y_svm):
+        length = len(predict_Y_svm)
+    else:
+        length = len(predict_Y_knn)
+    for i in range(length):
+        if predict_Y_knn[i] == predict_Y_svm[i] == k:
+            index_same_predictLabel_list.append(i)
+    return index_same_predictLabel_list
+    # else:
+    #     return index_same_predictLabel_list
+
+
+def get_Y_X_tuple_list(Y_list, X_list):
+    """
+    返回标签和特征组成的元组list
+    :param Y_list: 标签list
+    :param X_list: 特征list
+    :return:Y_X_tuple_list：标签和特征组成的元组list
+    """
+    Y_X_tuple_list = []
+    if len(Y_list) == len(X_list):
+        for i in range(len(Y_list)):
+            Y_X_tuple_list.append((Y_list[i], X_list[i]))
+        return Y_X_tuple_list
+    else:
+        Y_X_tuple_list
+
+
+def get_Y_and_X_list_from_tuple(Y_X_tuple_list):
+    """
+    从标签和特征组成的元组list得到相应的标签list和特征list
+    :param Y_X_tuple_list:标签和特征组成的元组list
+    :return:标签list，特征list
+    """
+    Y_list = []
+    X_list = []
+    if len(Y_X_tuple_list) is not 0:
+        for i in range(len(Y_X_tuple_list)):
+            Y_list.append(Y_X_tuple_list[i][0])
+            X_list.append(Y_X_tuple_list[i][1])
+        return Y_list, X_list

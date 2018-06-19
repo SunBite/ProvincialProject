@@ -96,8 +96,8 @@ class FeaturesExtractorOnSpark:
 if __name__ == '__main__':
     starttime = datetime.datetime.now()
     feos.FeaturesExtractorOnSpark(
-        "hdfs://sunbite-computer:9000/keyframepath.txt",
-        "hdfs://sunbite-computer:9000/features320240-366-1/").featuresextractor()
+        r"file:/home/sunbite/Co_KNN_SVM_TMP/keyframepath.txt",
+        r"file:/home/sunbite/Co_KNN_SVM_TMP/features320240-366/").featuresextractor()
     endtime = datetime.datetime.now()
     print('----------------------------------------------------------------------------')
     print('----------------------------------------------------------------------------')

@@ -1,15 +1,13 @@
 # -*- coding: utf-8 -*-
-from PyQt5.QtWidgets import QMainWindow, QApplication, QDesktopWidget, qApp, QFileDialog, QHeaderView
-from PyQt5 import QtCore, QtGui, QtWidgets, QtMultimedia
+from PyQt5.QtWidgets import QMainWindow, QApplication, QDesktopWidget, qApp, QFileDialog, QMessageBox
+from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtGui import QPixmap
-from PyQt5.QtWidgets import QGraphicsScene, QGraphicsPixmapItem
 from PyQt5.QtCore import QRect, QTimer
-from PyQt5.QtMultimediaWidgets import QVideoWidget
 import sys
 import os
 import cv2
-import time
-import PlayVideoThread as pvt
+import TrainModelThread as tmt
+import DetectVideoThread  as dvt
 
 
 class Co_KNN_SVM_UI(QMainWindow):
@@ -23,6 +21,7 @@ class Co_KNN_SVM_UI(QMainWindow):
         self.center()
         self.setWindowTitle("科海人体行为动作识别系统")
         self.setFixedSize(750, 570)
+        self.__videoList = []
 
     def initUI(self):
         """
@@ -52,7 +51,8 @@ class Co_KNN_SVM_UI(QMainWindow):
 
         # 检测视频文件目录label
         self.label_videofiledir = QtWidgets.QLabel(self)
-        self.label_videofiledir.setText("视频目录:")
+        self.label_videofiledir.setText("待检测视频列表:")
+        self.label_videofiledir.resize(120, 30)
         self.label_videofiledir.move(30, 30)
 
         # 检测视频文件目录
@@ -67,7 +67,7 @@ class Co_KNN_SVM_UI(QMainWindow):
         self.treeview_videofiledir.move(30, 60)
 
         # 播放视频的线程
-        #self.playvideothread = pvt.PlayVideoThread()
+        # self.playvideothread = pvt.PlayVideoThread()
 
         # 双击文件目录连接启动播放视频的线程
         self.treeview_videofiledir.doubleClicked.connect(self.startPlayVideoThread)
@@ -86,7 +86,7 @@ class Co_KNN_SVM_UI(QMainWindow):
 
         # 显示处理信息label
         self.label_showmessage = QtWidgets.QLabel(self)
-        self.label_showmessage.setText("显示处理信息：")
+        self.label_showmessage.setText("处理信息：")
         self.label_showmessage.move(400, 310)
         # 显示处理信息框
         self.textedit = QtWidgets.QTextEdit(self)
@@ -100,20 +100,22 @@ class Co_KNN_SVM_UI(QMainWindow):
         :return:
         """
         # 选取待检测视频menu的Action
-        self.action_openvideos_choosevideos = QtWidgets.QAction("选取视频", self)
+        self.action_openvideos_choosevideos = QtWidgets.QAction("添加视频到待检测视频列表", self)
         self.action_openvideos_choosevideos.triggered.connect(self.chooseVideos)
-        self.action_openvideos_choosefolder = QtWidgets.QAction("选取文件夹", self)
+        self.action_openvideos_choosefolder = QtWidgets.QAction("添加文件夹到待检测视频列表", self)
         self.action_openvideos_choosefolder.triggered.connect(self.chooseFolder)
-        self.action_openvideos_clear = QtWidgets.QAction("清空", self)
+        self.action_openvideos_clear = QtWidgets.QAction("清空待检测视频列表", self)
         self.action_openvideos_clear.triggered.connect(self.openVideos_clear)
         self.menu_openvideos.addAction(self.action_openvideos_choosevideos)
         self.menu_openvideos.addAction(self.action_openvideos_choosefolder)
         self.menu_openvideos.addAction(self.action_openvideos_clear)
         self.menu_openvideos.addSeparator()
         # 处理menu的Action
-        self.action_modeltrain = QtWidgets.QAction("模型训练", self, triggered=qApp.quit)
-        self.action_detect = QtWidgets.QAction("检测", self, triggered=qApp.quit)
-        self.menu_dispose.addAction(self.action_modeltrain)
+        self.action_trainmodel = QtWidgets.QAction("模型训练", self)
+        self.action_trainmodel.triggered.connect(self.trainModel)
+        self.action_detect = QtWidgets.QAction("检测视频", self)
+        self.action_detect.triggered.connect(self.detectVideo)
+        self.menu_dispose.addAction(self.action_trainmodel)
         self.menu_dispose.addAction(self.action_detect)
         self.menu_dispose.addSeparator()
         # 帮助menu的Action
@@ -143,10 +145,11 @@ class Co_KNN_SVM_UI(QMainWindow):
         :return:
         """
         files, filetype = QFileDialog.getOpenFileNames(None, "视频选择", os.path.expanduser("~"),
-                                                       "Video Files (*.avi *.mpg)")
+                                                       "Video Files (*.avi *.mpg *.mp4)")
         if files:
             # 清空model
             self.openVideos_clear()
+            self.__videoList = files
             videoItem = QtGui.QStandardItem(os.path.dirname(files[0]))
             videoItem.setEditable(False)
             for file in files:
@@ -167,6 +170,9 @@ class Co_KNN_SVM_UI(QMainWindow):
             self.openVideos_clear()
             # 遍历文件夹
             for dirpath, dirnames, filenames in os.walk(directory):
+                for filename in filenames:
+                    filePath = os.path.join(dirpath, filename)
+                    self.__videoList.append(filePath)
                 if filenames:
                     videoItem = QtGui.QStandardItem(dirpath)
                     videoItem.setEditable(False)
@@ -175,7 +181,7 @@ class Co_KNN_SVM_UI(QMainWindow):
                         ext = os.path.splitext(filename)[1]
                         # 将文件名统一转化为小写
                         ext = ext.lower()
-                        if ext == '.avi' or ext == '.mpg':
+                        if ext == '.avi' or ext == '.mpg' or ext == '.mp4':
                             videoItemChild = QtGui.QStandardItem(os.path.basename(filename))
                             videoItemChild.setEditable(False)
                             videoItem.appendRow(videoItemChild)
@@ -187,6 +193,7 @@ class Co_KNN_SVM_UI(QMainWindow):
         清空视频列表
         :return:
         """
+        self.__videoList.clear()
         self.model.clear()
         headerItem = QtGui.QStandardItem("视频列表")
         headerItem.setEditable(False)
@@ -215,6 +222,7 @@ class Co_KNN_SVM_UI(QMainWindow):
             # # 连接播放视频槽
             # self.playvideothread.signal.connect(self.playVideo)
             # self.playvideothread.start()
+
     def playVideo(self):
         """
         播放视频
@@ -223,7 +231,7 @@ class Co_KNN_SVM_UI(QMainWindow):
         if self.playCapture.isOpened():
             ret, frame = self.playCapture.read()
             if ret:
-                #self.treeview_videofiledir.setDisabled(True)
+                # self.treeview_videofiledir.setDisabled(True)
                 # 获取视频播放label的大小
                 s = self.picturelabel.rect()
                 # frame重置大小
@@ -240,8 +248,94 @@ class Co_KNN_SVM_UI(QMainWindow):
                 # 释放VideoCapture
                 self.playCapture.release()
                 # 关闭线程
-                #self.playvideothread.stop()
-                #self.treeview_videofiledir.setDisabled(False)
+                self.timer.stop()
+                # self.playvideothread.stop()
+                # self.treeview_videofiledir.setDisabled(False)
+
+    def trainModel(self):
+        """
+        训练model
+        :return:
+        """
+        if os.path.exists("/home/sunbite/Co_KNN_SVM_TMP/CoKNNSVM.model"):
+            reply = QMessageBox.information(self,
+                                            "注意",
+                                            "已有训练模型，是否重新训练模型？",
+                                            QMessageBox.Yes | QMessageBox.No)
+            if reply == QMessageBox.Yes:
+                self.startTrainModelThread()
+
+            else:
+                pass
+        else:
+            self.startTrainModelThread()
+
+    def startTrainModelThread(self):
+        """
+        调用训练model线程
+        :return:
+        """
+        self.textedit.append("正在训练模型...")
+
+        self.action_trainmodel.setEnabled(False)
+        self.action_detect.setEnabled(False)
+        self.trainmodelthread = tmt.TrainModelThread(self.receiveLogForTrainModel)
+        # self.trainmodelthread.signal.connect(self.trainModel)
+        self.trainmodelthread.start()
+
+    def receiveLogForTrainModel(self, msg):
+        """
+        接受log信息
+        :param msg: log信息
+        :return:
+        """
+        self.textedit.append(msg)
+        self.trainmodelthread.stop()
+        self.action_trainmodel.setEnabled(True)
+        self.action_detect.setEnabled(True)
+
+    def detectVideo(self):
+        """
+        检测视频
+        :return:
+        """
+        print(len(self.__videoList))
+        if len(self.__videoList) == 0:
+            reply = QMessageBox.information(self,
+                                            "注意",
+                                            "待检测视频为空，请添加待检测视频！",
+                                            QMessageBox.Ok)
+        else:
+            self.startDetectVideoThread()
+
+    def startDetectVideoThread(self):
+        """
+        调用检测线程
+        :return:
+        """
+        self.textedit.append("正在检测视频...")
+        self.action_openvideos_choosevideos.setEnabled(False)
+        self.action_openvideos_choosefolder.setEnabled(False)
+        self.action_openvideos_clear.setEnabled(False)
+        self.action_trainmodel.setEnabled(False)
+        self.action_detect.setEnabled(False)
+        self.detectvideothread = dvt.DetectVideoThread(self.receiveLogForDetectVideo, self.__videoList)
+        # self.trainmodelthread.signal.connect(self.trainModel)
+        self.detectvideothread.start()
+
+    def receiveLogForDetectVideo(self, msg):
+        """
+        接受log信息
+        :param msg: log信息
+        :return:
+        """
+        self.textedit.append(msg)
+        self.detectvideothread.stop()
+        self.action_openvideos_choosevideos.setEnabled(True)
+        self.action_openvideos_choosefolder.setEnabled(True)
+        self.action_openvideos_clear.setEnabled(True)
+        self.action_trainmodel.setEnabled(True)
+        self.action_detect.setEnabled(True)
 
 
 if __name__ == '__main__':

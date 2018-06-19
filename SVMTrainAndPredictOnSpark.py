@@ -32,10 +32,10 @@ class SVMTrainAndPredictOnSpark:
             test_x = []
             for i in range(0,len(line)-1):
                 y, x = svmutil.svm_read_problem(line[i])
-                train_y.extend(y[0:270])
-                train_x.extend(x[0:270])
-                test_y.extend(y[265:300])
-                test_x.extend(x[265:300])
+                train_y.extend(y[0:90])
+                train_x.extend(x[0:90])
+                test_y.extend(y[90:100])
+                test_x.extend(x[90:100])
             train_random_index = [i for i in range(len(train_y))]
             test_random_index = [i for i in range(len(test_y))]
             random.shuffle(train_random_index)
@@ -46,9 +46,10 @@ class SVMTrainAndPredictOnSpark:
             random_test_x = [test_x[x] for x in test_random_index]
             m = svmutil.svm_train(random_train_y, random_train_x, "-s 0 -t 2 -c 32 -g 8 -b 1")
             predict_label, accuary, prob_estimates = svmutil.svm_predict(random_test_y, random_test_x, m, '-b 1')
+            svmutil.svm_save_model('/home/sunbite/Co_KNN_SVM_TMP/CoKNNSVM2.model',m)
             return accuary
         #features.map(lambda x:x.split(" ")).map(getmodelandaccuary).repartition(1).saveAsTextFile(self.__savepath)
         features.map(lambda x: x.split(" ")).map(getmodelandaccuary).repartition(1).count()
 if __name__ == '__main__':
-    stapos.SVMTrainAndPredictOnSpark("hdfs://sunbite-computer:9000/filepath/filepath320240.txt",
+    stapos.SVMTrainAndPredictOnSpark("hdfs://sunbite-computer:9000/filepath/filepath320240-366.txt",
                                          "/home/sunbite/accuary").SVMTrainAndPredictOnSpark()

@@ -3,11 +3,14 @@ import svmutil
 from pyspark import SparkContext
 import CoKNNSVMTrainAndPredictOnSpark as ckstapos
 import Co_KNN_SVM
+import Co_KNN_SVM_New
 import Co_KNN_SVM_Utilities
 import random
 import datetime
 import os
 from ListParam import *
+import test1
+from sklearn.model_selection import train_test_split
 
 
 class CoKNNSVMTrainAndPredictOnSpark:
@@ -71,34 +74,47 @@ class CoKNNSVMTrainAndPredictOnSpark:
             return (TOTALLABEL, TOTALFEATURES)
 
         totallabel, totalfeatures = getfeaturelistandlabellist(totalfeaturesandlabel)
-        y = totallabel
-        x = totalfeatures
+        # y = totallabel
+        # x = totalfeatures
 
         # x = Co_KNN_SVM_Utilities.getfeatureforlibsvm(x)
-        train_y = y[0:220]
-        train_x = x[0:220]
-        test_y = y[220:1500]
-        test_x = x[220:1500]
-        # train_random_index = [i for i in range(len(train_y))]
-        # test_random_index = [i for i in range(len(test_y))]
-        # random.shuffle(train_random_index)
-        # random.shuffle(test_random_index)
+
+        random_index = [i for i in range(len(totallabel))]
+        #test_random_index = [i for i in range(len(x))]
+        random.shuffle(random_index)
+        #random.shuffle(test_random_index)
+        random_y = [totallabel[x] for x in random_index]
+        random_x = [totalfeatures[x] for x in random_index]
+        # random_test_y = [test_y[x] for x in test_random_index]
+        # random_test_x = [test_x[x] for x in test_random_index]
         # random_train_y = [train_y[x] for x in train_random_index]
         # random_train_x = [train_x[x] for x in train_random_index]
         # random_test_y = [test_y[x] for x in test_random_index]
         # random_test_x = [test_x[x] for x in test_random_index]
-        random_train_y = train_y
-        random_train_x = train_x
-        random_test_y = test_y
-        random_test_x = test_x
-        Co_KNN_SVM.co_knn_svm(random_train_y, random_train_x, random_test_y, random_test_x)
+        # random_train_y = train_y
+        # random_train_x = train_x
+        # random_test_y = test_y
+        # random_test_x = test_x
+        # train_y = random_y[0:1500]
+        # train_x = random_x[0:1500]
+        # test_y = random_y[1500:1580]
+        # test_x = random_x[1500:1580]
+        train_x,test_x,train_y,test_y=train_test_split(totalfeatures,totallabel,test_size=0.2,random_state=42,
+                                                                                          shuffle=False)
+        # train_y = totallabel[0:800]
+        # train_x = totalfeatures[0:800]
+        # test_y = totallabel[800:1580]
+        # test_x = totalfeatures[800:1580]
+        #Co_KNN_SVM.Co_KNN_SVM(train_y, train_x, test_y, test_x, self.__savepath)
+        #test1.Co_KNN_SVM(train_y, train_x, test_y, test_x, self.__savepath)
+        Co_KNN_SVM_New.Co_KNN_SVM(train_y, train_x, test_y, test_x, self.__savepath)
 
 
 if __name__ == '__main__':
     starttime = datetime.datetime.now()
     # ckstapos.CoKNNSVMTrainAndPredictOnSpark("hdfs://sunbite-computer:9000/filepath/filepath320240-366.txt",
-    ckstapos.CoKNNSVMTrainAndPredictOnSpark("file:/home/sunbite/features320240-366/features320240-366/",
-                                            "/home/sunbite/accuary").CoKNNSVMTrainAndPredictOnSpark()
+    ckstapos.CoKNNSVMTrainAndPredictOnSpark("file:/home/sunbite/Co_KNN_SVM_TMP/features320240-366/",
+                                            '/home/sunbite/Co_KNN_SVM_TMP/CoKNNSVM1.model').CoKNNSVMTrainAndPredictOnSpark()
     endtime = datetime.datetime.now()
     print('----------------------------------------------------------------------------')
     print('----------------------------------------------------------------------------')

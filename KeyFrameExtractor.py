@@ -82,7 +82,7 @@ class KeyFrameExtractor:
             print(" you inputted file is not existed!")
 if __name__ == '__main__':
     starttime = datetime.datetime.now()
-    KeyFrameExtractor = KeyFrameExtractor(r"/home/sunbite/video/action_youtube_naudio", r"/home/sunbite/video/keyframe")
+    KeyFrameExtractor = KeyFrameExtractor(r"/home/sunbite/video/action_youtube_naudio", r"/home/sunbite/video/keyframe2")
     KeyFrameExtractor.keyframeextractor()
     endtime = datetime.datetime.now()
     print('----------------------------------------------------------------------------')

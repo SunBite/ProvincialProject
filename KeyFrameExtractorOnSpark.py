@@ -44,7 +44,7 @@ class KeyFrameExtractorOnSpark:
 
 if __name__ == '__main__':
     starttime = datetime.datetime.now()
-    KeyFrameExtractorOnSpark(r"file:/home/sunbite/videopath.txt", r"/home/sunbite/video/keyframe1/").keyframeextractor()
+    KeyFrameExtractorOnSpark(r"file:/home/sunbite/Co_KNN_SVM_TMP/videopath.txt", r"/home/sunbite/Co_KNN_SVM_TMP/keyframe/").keyframeextractor()
     endtime = datetime.datetime.now()
     print('----------------------------------------------------------------------------')
     print('----------------------------------------------------------------------------')
