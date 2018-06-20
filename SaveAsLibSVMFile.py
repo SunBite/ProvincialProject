@@ -66,5 +66,5 @@ if __name__ == '__main__':
 
     #salf.SaveAsLibSVMFile("hdfs://sunbite-computer:9000/features320240-366/features-" + i,
     #                      "/home/sunbite/libsvmfile320240-366/" + i).saveaslibSVMfile()
-    salf.SaveAsLibSVMFile("file:/home/sunbite/features320240-366/features320240-366/part-*" ,
-                          "file:/home/sunbite/libsvmfile320240-366/libsvmfile320240-366").saveaslibSVMfile()
+    salf.SaveAsLibSVMFile("file:/home/sunbite/Co_KNN_SVM_TMP/features320240-366/part-*" ,
+                          "file:/home/sunbite/dataset/").saveaslibSVMfile()

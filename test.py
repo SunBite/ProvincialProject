@@ -4,6 +4,8 @@ import VideoKafkaProducer as vkp
 import re
 import paramiko
 import VideoDetector
+from sklearn import datasets
+from sklearn.model_selection import train_test_split
 
 # from pyspark.streaming.kafka import KafkaUtils, TopicAndPartition
 import kafka
@@ -31,3 +33,13 @@ import GetFeatures1
 # print(stdout.read())
 # vd = VideoDetector.VideoDetector("/home/sunbite/video/action_youtube_naudio/basketball/v_shooting_01_01.avi","/home/sunbite/Co_KNN_SVM_TMP/CoKNNSVM.model")
 # print(vd.getLabel())
+x,y=datasets.load_svmlight_file("/home/sunbite/dataset/dataset")
+print(x.todense())
+print(y)
+
+train_x,test_x,train_y,test_y=train_test_split(x.todense(),y,test_size=0.2,random_state=42,
+                                                                                          shuffle=False)
+print(len(train_x))
+print(len(test_x))
+print(len(train_y))
+print(len(test_y))
