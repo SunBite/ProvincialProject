@@ -3,7 +3,7 @@ import cv2
 import os
 import math
 import GetFeatures
-import svmutil
+from sklearn.externals import joblib
 
 
 class VideoDetector:
@@ -82,12 +82,11 @@ class VideoDetector:
         self.getFeatures()
         if os.path.exists(self.__modelpath):
             # 加载model文件
-            model = svmutil.svm_load_model(self.__modelpath)
+            model = joblib.load(self.__modelpath)
             test_y = [self.__features[0]]
-            test_x = self.__features[1:]
-            test_x = self.getFeatureForLibsvm(test_x)
+            test_x = [self.__features[1:]]
             # 预测
-            predict_label, accuary, prob_estimates = svmutil.svm_predict(test_y, test_x, model, '-b 1')
+            predict_label = model.predict(test_x)
             return predict_label[0], test_y[0]
 
     def getFeaturesList(self, my_feature):
@@ -100,17 +99,3 @@ class VideoDetector:
             for j in range(0, len(my_feature[i])):
                 my_feature_temp.append(float(my_feature[i][j]))
         return my_feature_temp
-
-    def getFeatureForLibsvm(self, featurevalue):
-        """
-        把常规的特征list转换成libsvm需要的特征
-        :param featurevalue: 常规的特征list
-        :return: 返回[{1：aaa,2:bbb,...},...]形式的特征list
-        """
-        featuredictlist = []
-        featuremap = {}
-        for i in range(0, len(featurevalue)):
-            #for j in range(0, len(featurevalue[i])):
-            featuremap[i + 1] = featurevalue[i]
-        featuredictlist.append(featuremap)
-        return featuredictlist

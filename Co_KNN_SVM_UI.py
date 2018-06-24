@@ -119,8 +119,10 @@ class Co_KNN_SVM_UI(QMainWindow):
         self.menu_dispose.addAction(self.action_detect)
         self.menu_dispose.addSeparator()
         # 帮助menu的Action
-        self.action_lookuphelp = QtWidgets.QAction("帮助", self, triggered=qApp.quit)
-        self.action_about = QtWidgets.QAction("关于", self, triggered=qApp.quit)
+        self.action_lookuphelp = QtWidgets.QAction("帮助", self)
+        self.action_lookuphelp.triggered.connect(self.lookuphelpfile)
+        self.action_about = QtWidgets.QAction("关于", self)
+        self.action_about.triggered.connect(self.lookupaboutfile)
         self.menu_help.addAction(self.action_lookuphelp)
         self.menu_help.addAction(self.action_about)
         self.menu_help.addSeparator()
@@ -337,6 +339,19 @@ class Co_KNN_SVM_UI(QMainWindow):
         self.action_trainmodel.setEnabled(True)
         self.action_detect.setEnabled(True)
 
+    def lookuphelpfile(self):
+        """
+        使用系统的浏览器打开帮助文档
+        :return:
+        """
+        os.system("firefox /home/sunbite/PycharmProjects/myApp/help.html")
+
+    def lookupaboutfile(self):
+        """
+        使用系统的浏览器打开关于文档
+        :return:
+        """
+        os.system("firefox /home/sunbite/PycharmProjects/myApp/about.html")
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)

@@ -1,23 +1,21 @@
 # -*- coding: utf-8 -*-
 
 import Co_KNN_SVM_Utilities as utilities
+import svmutil
 import numpy as np
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.svm import SVC
 from sklearn import datasets
 from sklearn.model_selection import train_test_split
-from sklearn.externals import joblib
 
 
 def Co_KNN_SVM(train_Y, train_X, test_Y, test_X, savepath=None):
-    model_max = None
-    accuracy_max = 0
     # 每次迭代，添加到对方分类器训练集的样本数
-    temp_num_svm = 44
-    temp_num_knn = 44
+    temp_num_svm = 55
+    temp_num_knn = 55
 
     # 迭代次数
-    loop_num = 10
+    loop_num = 6
 
     # knn中的K
     K = 4
@@ -48,20 +46,36 @@ def Co_KNN_SVM(train_Y, train_X, test_Y, test_X, savepath=None):
         # 得到svm的训练集标签和训练集的特征
         train_Y_svm_from_tuple, train_X_svm_from_tuple = utilities.get_Y_and_X_list_from_tuple(
             train_svm_Y_X_tuple_list.copy())
+        # 得到knn的训练集标签和训练集的特征
+        train_Y_knn_from_tuple, train_X_knn_from_tuple = utilities.get_Y_and_X_list_from_tuple(train_knn_Y_X_tuple_list)
+
+        # train_X_svm_from_tuple_temp, test_X_svm_temp, train_Y_svm_from_tuple_temp, test_Y_svm_temp = train_test_split(
+        #     train_X_svm_from_tuple, train_Y_svm_from_tuple, test_size=11)
+        #
+        # train_X_knn_from_tuple_temp, test_X_knn_temp, train_Y_knn_from_tuple_temp, test_Y_knn_temp = train_test_split(
+        #     train_X_knn_from_tuple, train_Y_knn_from_tuple, test_size=11)
+
         # 得到svm的测试集标签和测试集的特征
         test_Y_svm_from_tuple, test_X_svm_from_tuple = utilities.get_Y_and_X_list_from_tuple(
             test_svm_Y_X_tuple_list.copy())
-        # 得到knn的训练集标签和训练集的特征
-        train_Y_knn_from_tuple, train_X_knn_from_tuple = utilities.get_Y_and_X_list_from_tuple(train_knn_Y_X_tuple_list)
+
         # 得到knn的测试集标签和测试集的特征
         test_Y_knn_from_tuple, test_X_knn_from_tuple = utilities.get_Y_and_X_list_from_tuple(test_knn_Y_X_tuple_list)
 
+        # test_X_svm_from_tuple, test_X_svm_temp, test_Y_svm_from_tuple, test_Y_svm_temp = train_test_split(
+        #     test_X_svm_from_tuple, test_Y_svm_from_tuple,
+        #     test_size=0.05, random_state=42)
+        #
+        # test_X_knn_from_tuple, test_X_knn_temp, test_Y_knn_from_tuple, test_Y_knn_temp = train_test_split(
+        #     test_X_knn_from_tuple, test_Y_knn_from_tuple,
+        #     test_size=0.05, random_state=42)
         # KNN计算准确率
         knn = KNeighborsClassifier(n_neighbors=K, weights='distance')
         # 训练
         knn.fit(train_X_knn_from_tuple, train_Y_knn_from_tuple)
         # 获得准确率
-        accuracy_knn = knn.score(fixed_test_X, fixed_test_Y)
+        #accuracy_knn = knn.score(fixed_test_X, fixed_test_Y)
+        accuracy_knn = knn.score(test_X_knn_from_tuple, test_Y_knn_from_tuple)
         accuracy_knn_list.append(accuracy_knn * 100)
 
         print("预测结果（KNN）")
@@ -73,18 +87,16 @@ def Co_KNN_SVM(train_Y, train_X, test_Y, test_X, savepath=None):
         # 训练
         svc.fit(train_X_svm_from_tuple, train_Y_svm_from_tuple)
         # 获得准确率
-        accuracy_svm = svc.score(fixed_test_X, fixed_test_Y)
+        #accuracy_svm = svc.score(fixed_test_X, fixed_test_Y)
+        accuracy_svm = svc.score(test_X_svm_from_tuple, test_Y_svm_from_tuple)
         accuracy_svm_list.append(accuracy_svm * 100)
 
         print("预测结果（SVM）")
         print(h)
         print(accuracy_svm)
-        if accuracy_svm > accuracy_max:
-            accuracy_max = accuracy_svm
-            model_max = svc
+
         if h == loop_num:
             break
-
         # KNN和SVM半监督训练过程
         # ---------------------------------KNN测试样本预测和置信度计算过程 ----------------------------------
         # 根据模型，预测样本
@@ -164,9 +176,6 @@ def Co_KNN_SVM(train_Y, train_X, test_Y, test_X, savepath=None):
         for i in diff_index_test_knn_Y_X_tuple_list:
             diff_test_knn_Y_X_tuple_list.append(test_knn_Y_X_tuple_list[i])
         test_knn_Y_X_tuple_list = diff_test_knn_Y_X_tuple_list
-    if model_max is not None:
-        print(accuracy_max * 100)
-        joblib.dump(model_max, savepath)
 
     print("KNN的准确率：")
     print(accuracy_knn_list)
@@ -176,7 +185,6 @@ def Co_KNN_SVM(train_Y, train_X, test_Y, test_X, savepath=None):
 
 if __name__ == '__main__':
     x, y = datasets.load_svmlight_file("/home/sunbite/dataset/dataset")
-    train_x, test_x, train_y, test_y = train_test_split(x.todense().tolist(), y, test_size=0.2, random_state=42,
-                                                        shuffle=False)
+    train_x, test_x, train_y, test_y = train_test_split(x.todense().tolist(), y, test_size=0.2,shuffle=False)
 
     Co_KNN_SVM(train_y, train_x, test_y, test_x)

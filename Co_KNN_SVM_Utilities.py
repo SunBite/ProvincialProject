@@ -5,6 +5,7 @@ import numpy as np
 from collections import Counter
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.svm import SVC
+import random
 
 
 def knn(trainImages, trainLabels, testImages, testLabels, K):
@@ -138,7 +139,6 @@ def get_confidence_knn(probility_knn):
         probility_knn = np.array(probility_knn)
         result = probility_knn[np.argsort(-probility_knn)]
         confidence_knn = result[0] - result[1]
-        # confidence_knn = result[0]
 
     return confidence_knn
 
@@ -155,7 +155,6 @@ def get_confidence_svm(probility_svm):
         probility_svm = np.array(probility_svm)
         result = probility_svm[np.argsort(-probility_svm)]
         confidence_svm = result[0] - result[1]
-        # confidence_svm = result[0]
     return confidence_svm
 
 
@@ -169,7 +168,7 @@ def get_confidence_svm_index(confidence_svm_list, predict_Y_svm, predict_Y_knn, 
     :return:
     """
     average = int(temp_num_svm / 11)
-    average = int(1)
+    #average = int(4)
     index_svm_label_high_confidence = []
     for i in range(1, 11 + 1):
         # 获得knn和svm所预测的在每个类别中的相同标签的索引
@@ -193,71 +192,6 @@ def get_confidence_svm_index(confidence_svm_list, predict_Y_svm, predict_Y_knn, 
         index_same_predictLabel_sort_top_list = index_same_predictLabel_sort_list.take(np.arange(0, top_N))
         # 添加到要返回的具有高置信度索引的list
         index_svm_label_high_confidence.extend(index_same_predictLabel_sort_top_list.tolist())
-        # index_svm_label_high_confidence.extend(index_same_predictLabel_list.tolist())
-    # print(len(index_svm_label_high_confidence))
-    # index_same_predictLabel_list = get_same_predictLabel_index(predict_Y_svm, predict_Y_knn)
-    # confidence_svm_same_predictLabel_list = []
-    # for i in index_same_predictLabel_list:
-    #     confidence_svm_same_predictLabel_list.append(confidence_svm_list[i])
-    # ind_confidence = np.argsort(-np.array(confidence_svm_same_predictLabel_list))
-    # index_svm_label_high_confidence = ind_confidence.take(np.arange(0, temp_num_svm))
-
-    # # svm_label_high_confidence代表的是索引号ind_confidence所处位置的标签
-    # predict_Y_svm = np.array(predict_Y_svm)
-    # svm_label_high_confidence = predict_Y_svm[ind_confidence]
-    # num1 = 0
-    # num2 = 0
-    # num3 = 0
-    # num4 = 0
-    # num5 = 0
-    # num6 = 0
-    # num7 = 0
-    # num8 = 0
-    # num9 = 0
-    # num10 = 0
-    # num11 = 0
-    # average = temp_num_svm / 11
-    # total = np.array(ind_confidence).shape[0]
-    #
-    # index_svm_label_high_confidence = []
-    #
-    # for j in range(0, total):
-    #     if (int(svm_label_high_confidence[j]) == 1) and (num1 < average):
-    #         index_svm_label_high_confidence.append(ind_confidence[j])
-    #         num1 = num1 + 1
-    #     elif (int(svm_label_high_confidence[j]) == 2) and (num2 < average):
-    #         index_svm_label_high_confidence.append(ind_confidence[j])
-    #         num2 = num2 + 1
-    #     elif (int(svm_label_high_confidence[j]) == 3) and (num3 < average):
-    #         index_svm_label_high_confidence.append(ind_confidence[j])
-    #         num3 = num3 + 1
-    #     elif (int(svm_label_high_confidence[j]) == 4) and (num4 < average):
-    #         index_svm_label_high_confidence.append(ind_confidence[j])
-    #         num4 = num4 + 1
-    #     elif (int(svm_label_high_confidence[j]) == 5) and (num5 < average):
-    #         index_svm_label_high_confidence.append(ind_confidence[j])
-    #         num5 = num5 + 1
-    #     elif (int(svm_label_high_confidence[j]) == 6) and (num6 < average):
-    #         index_svm_label_high_confidence.append(ind_confidence[j])
-    #         num6 = num6 + 1
-    #     elif (int(svm_label_high_confidence[j]) == 7) and (num7 < average):
-    #         index_svm_label_high_confidence.append(ind_confidence[j])
-    #         num7 = num7 + 1
-    #     elif (int(svm_label_high_confidence[j]) == 8) and (num8 < average):
-    #         index_svm_label_high_confidence.append(ind_confidence[j])
-    #         num8 = num8 + 1
-    #     elif (int(svm_label_high_confidence[j]) == 9) and (num9 < average):
-    #         index_svm_label_high_confidence.append(ind_confidence[j])
-    #         num9 = num9 + 1
-    #     elif (int(svm_label_high_confidence[j]) == 10) and (num10 < average):
-    #         index_svm_label_high_confidence.append(ind_confidence[j])
-    #         num10 = num10 + 1
-    #     elif (int(svm_label_high_confidence[j]) == 11) and (num11 < average):
-    #         index_svm_label_high_confidence.append(ind_confidence[j])
-    #         num11 = num11 + 1
-    #
-    #     if len(index_svm_label_high_confidence) == temp_num_svm:
-    #         break
     return index_svm_label_high_confidence
 
 
@@ -271,7 +205,7 @@ def get_confidence_knn_index(confidence_knn_list, predict_Y_svm, predict_Y_knn, 
     :return:
     """
     average = int(temp_num_knn / 11)
-    average = int(1)
+    #average = int(4)
     index_knn_label_high_confidence = []
     for i in range(1, 11 + 1):
         # 获得knn和svm所预测的在每个类别中的相同标签的索引
@@ -293,70 +227,6 @@ def get_confidence_knn_index(confidence_knn_list, predict_Y_svm, predict_Y_knn, 
         index_same_predictLabel_sort_top_list = index_same_predictLabel_sort_list.take(np.arange(0, top_N))
         # 添加到要返回的具有高置信度索引的list
         index_knn_label_high_confidence.extend(index_same_predictLabel_sort_top_list.tolist())
-    # print(len(index_knn_label_high_confidence))
-    # index_same_predictLabel_list = get_same_predictLabel_index(predict_Y_svm, predict_Y_knn)
-    # confidence_knn_same_predictLabel_list = []
-    # for i in index_same_predictLabel_list:
-    #     confidence_knn_same_predictLabel_list.append(confidence_knn_list[i])
-    # ind_confidence = np.argsort(-np.array(confidence_knn_same_predictLabel_list))
-    # index_knn_label_high_confidence = ind_confidence.take(np.arange(0, temp_num_knn))
-    # total = np.array(confidence_knn_list).shape[0]
-    # index_knn_label_high_confidence = []
-    # # 根据置信度排序 ind_confidence表示索引号
-    # ind_confidence = np.argsort(np.array(confidence_knn_list))
-    # # 每一个索引对应的预测标签
-    # predict_Y_knn = np.array(predict_Y_knn)
-    # knn_label_high_confidence = predict_Y_knn[ind_confidence]
-    #
-    # num1 = 0
-    # num2 = 0
-    # num3 = 0
-    # num4 = 0
-    # num5 = 0
-    # num6 = 0
-    # num7 = 0
-    # num8 = 0
-    # num9 = 0
-    # num10 = 0
-    # num11 = 0
-    # average = temp_num_knn / 11
-    # for j in range(0, total):
-    #     if (int(knn_label_high_confidence[j]) == 1) and (num1 < average):
-    #         index_knn_label_high_confidence.append(ind_confidence[j])
-    #         num1 = num1 + 1
-    #     elif (int(knn_label_high_confidence[j]) == 2) and (num2 < average):
-    #         index_knn_label_high_confidence.append(ind_confidence[j])
-    #         num2 = num2 + 1
-    #     elif (int(knn_label_high_confidence[j]) == 3) and (num3 < average):
-    #         index_knn_label_high_confidence.append(ind_confidence[j])
-    #         num3 = num3 + 1
-    #     elif (int(knn_label_high_confidence[j]) == 4) and (num4 < average):
-    #         index_knn_label_high_confidence.append(ind_confidence[j])
-    #         num4 = num4 + 1
-    #     elif (int(knn_label_high_confidence[j]) == 5) and (num5 < average):
-    #         index_knn_label_high_confidence.append(ind_confidence[j])
-    #         num5 = num5 + 1
-    #     elif (int(knn_label_high_confidence[j]) == 6) and (num6 < average):
-    #         index_knn_label_high_confidence.append(ind_confidence[j])
-    #         num6 = num6 + 1
-    #     elif (int(knn_label_high_confidence[j]) == 7) and (num7 < average):
-    #         index_knn_label_high_confidence.append(ind_confidence[j])
-    #         num7 = num7 + 1
-    #     elif (int(knn_label_high_confidence[j]) == 8) and (num8 < average):
-    #         index_knn_label_high_confidence.append(ind_confidence[j])
-    #         num8 = num8 + 1
-    #     elif (int(knn_label_high_confidence[j]) == 9) and (num9 < average):
-    #         index_knn_label_high_confidence.append(ind_confidence[j])
-    #         num9 = num9 + 1
-    #     elif (int(knn_label_high_confidence[j]) == 10) and (num10 < average):
-    #         index_knn_label_high_confidence.append(ind_confidence[j])
-    #         num10 = num10 + 1
-    #     elif (int(knn_label_high_confidence[j]) == 11) and (num11 < average):
-    #         index_knn_label_high_confidence.append(ind_confidence[j])
-    #         num11 = num11 + 1
-    #
-    #     if len(index_knn_label_high_confidence) == temp_num_knn:
-    #         break
     return index_knn_label_high_confidence
 
 
