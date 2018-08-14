@@ -84,13 +84,12 @@ class DetectVideoThread(QThread):
         """
         self.connetServer()
         log = ''
-        # for i in range(0, len(self.__videoList)):
-        #     vd = VideoDetector.VideoDetector(self.__videoList[i], "/home/sunbite/Co_KNN_SVM_TMP/CoKNNSVM.model")
-        #     predictLabel, trueLabel = vd.getLabel()
-        #     predictClassName = self.__classNameMap[predictLabel]
-        #     trueClassName = self.__classNameMap[trueLabel]
-        #     log += '视频%s：\n检测类别为：%s。\n实际类别为：%s。 \n' % (
-        #     os.path.basename(self.__videoList[i]), predictClassName, trueClassName)
-        time.sleep(20)
+        for i in range(0, len(self.__videoList)):
+            vd = VideoDetector.VideoDetector(self.__videoList[i], "/home/sunbite/Co_KNN_SVM_TMP/CoKNNSVM.model")
+            predictLabel, trueLabel = vd.getLabel()
+            predictClassName = self.__classNameMap[predictLabel]
+            trueClassName = self.__classNameMap[trueLabel]
+            log += '视频%s：\n检测类别为：%s。\n实际类别为：%s。 \n' % (
+            os.path.basename(self.__videoList[i]), predictClassName, trueClassName)
         log += "视频检测完成。"
         sendlog.emit(log)

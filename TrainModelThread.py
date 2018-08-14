@@ -75,12 +75,14 @@ class TrainModelThread(QThread):
         :return:
         """
         # 删除关键帧文件夹
-        rm_keyframe_stdin, rm_keyframe_stdout, rm_keyframe_stderr = self.ssh.exec_command('rm -r /home/sunbite/Co_KNN_SVM_TMP/keyframe')
+        rm_keyframe_stdin, rm_keyframe_stdout, rm_keyframe_stderr = self.ssh.exec_command(
+            'rm -r /home/sunbite/Co_KNN_SVM_TMP/keyframe')
         print(rm_keyframe_stdout.read())
         print(rm_keyframe_stderr.read())
         if rm_keyframe_stderr:
             # 创建空的关键帧文件夹
-            mk_keyframe_stdin, mk_keyframe_stdout, mk_keyframe_stderr = self.ssh.exec_command('mkdir /home/sunbite/Co_KNN_SVM_TMP/keyframe')
+            mk_keyframe_stdin, mk_keyframe_stdout, mk_keyframe_stderr = self.ssh.exec_command(
+                'mkdir /home/sunbite/Co_KNN_SVM_TMP/keyframe')
             print(mk_keyframe_stdout.read())
             print(mk_keyframe_stderr.read())
         # 删除关键帧提取准备的参数文件
@@ -117,26 +119,25 @@ class TrainModelThread(QThread):
         :return:
         """
         self.connetServer()
-        #self.deleteAndCreateTmp()
+        self.deleteAndCreateTmp()
         # 关键帧提取参数准备
-        # videopathwriter_stdin, videopathwriter_stdout, videopathwriter_stderr = self.ssh.exec_command(
-        #     'export PATH=/home/sunbite/anaconda3/bin:$PATH;python /home/sunbite/PycharmProjects/myApp/VideoPathWriter.py')
-        # print(videopathwriter_stdout.read())
-        # # 关键帧提取
-        # keyframeextractoronspark_stdin, keyframeextractoronspark_stdout, keyframeextractoronspark_stderr = self.ssh.exec_command(
-        #     'export PATH=/home/sunbite/anaconda3/bin:$PATH;/home/sunbite/spark-2.1.2/bin/spark-submit --py-files /home/sunbite/PycharmProjects/myApp/KeyFrameExtractor.py --master local[2] /home/sunbite/PycharmProjects/myApp/KeyFrameExtractorOnSpark.py')
-        # print(keyframeextractoronspark_stdout.read())
-        # # 特征提取参数准备
-        # keyframepathwriter_stdin, keyframepathwriter_stdout, keyframepathwriter_stderr = self.ssh.exec_command(
-        #     'export PATH=/home/sunbite/anaconda3/bin:$PATH;python /home/sunbite/PycharmProjects/myApp/KeyFramePathWriter.py')
-        # print(keyframepathwriter_stdout.read())
-        # # 特征提取
-        # featuresextractoronspark_stdin, featuresextractoronspark_stdout, featuresextractoronspark_stderr = self.ssh.exec_command(
-        #     'export PATH=/home/sunbite/anaconda3/bin:$PATH;/home/sunbite/spark-2.1.2/bin/spark-submit --py-files /home/sunbite/PycharmProjects/myApp/GetFeatures.py --master local[2] /home/sunbite/PycharmProjects/myApp/FeaturesExtractorOnSpark.py')
-        # print(featuresextractoronspark_stdout.read())
-        # # 协同训练保存model
-        # coknnsvmtrainandpredictonspark_stdin, coknnsvmtrainandpredictonspark_stdout, coknnsvmtrainandpredictonspark_stderr = self.ssh.exec_command(
-        #     'export PATH=/home/sunbite/anaconda3/bin:$PATH;/home/sunbite/spark-2.1.2/bin/spark-submit --py-files /home/sunbite/PycharmProjects/myApp/ListParam.py,/home/sunbite/PycharmProjects/myApp/Co_KNN_SVM_New.py,/home/sunbite/PycharmProjects/myApp/Co_KNN_SVM_Utilities.py --master local[2] /home/sunbite/PycharmProjects/myApp/CoKNNSVMTrainAndPredictOnSpark.py')
-        # print(coknnsvmtrainandpredictonspark_stdout.read())
-        time.sleep(20)
+        videopathwriter_stdin, videopathwriter_stdout, videopathwriter_stderr = self.ssh.exec_command(
+            'export PATH=/home/sunbite/anaconda3/bin:$PATH;python /home/sunbite/PycharmProjects/myApp/VideoPathWriter.py')
+        print(videopathwriter_stdout.read())
+        # 关键帧提取
+        keyframeextractoronspark_stdin, keyframeextractoronspark_stdout, keyframeextractoronspark_stderr = self.ssh.exec_command(
+            'export PATH=/home/sunbite/anaconda3/bin:$PATH;/home/sunbite/spark-2.1.2/bin/spark-submit --py-files /home/sunbite/PycharmProjects/myApp/KeyFrameExtractor.py --master local[2] /home/sunbite/PycharmProjects/myApp/KeyFrameExtractorOnSpark.py')
+        print(keyframeextractoronspark_stdout.read())
+        # 特征提取参数准备
+        keyframepathwriter_stdin, keyframepathwriter_stdout, keyframepathwriter_stderr = self.ssh.exec_command(
+            'export PATH=/home/sunbite/anaconda3/bin:$PATH;python /home/sunbite/PycharmProjects/myApp/KeyFramePathWriter.py')
+        print(keyframepathwriter_stdout.read())
+        # 特征提取
+        featuresextractoronspark_stdin, featuresextractoronspark_stdout, featuresextractoronspark_stderr = self.ssh.exec_command(
+            'export PATH=/home/sunbite/anaconda3/bin:$PATH;/home/sunbite/spark-2.1.2/bin/spark-submit --py-files /home/sunbite/PycharmProjects/myApp/GetFeatures.py --master local[2] /home/sunbite/PycharmProjects/myApp/FeaturesExtractorOnSpark.py')
+        print(featuresextractoronspark_stdout.read())
+        # 协同训练保存model
+        coknnsvmtrainandpredictonspark_stdin, coknnsvmtrainandpredictonspark_stdout, coknnsvmtrainandpredictonspark_stderr = self.ssh.exec_command(
+            'export PATH=/home/sunbite/anaconda3/bin:$PATH;/home/sunbite/spark-2.1.2/bin/spark-submit --py-files /home/sunbite/PycharmProjects/myApp/ListParam.py,/home/sunbite/PycharmProjects/myApp/Co_KNN_SVM_New.py,/home/sunbite/PycharmProjects/myApp/Co_KNN_SVM_Utilities.py --master local[2] /home/sunbite/PycharmProjects/myApp/CoKNNSVMTrainAndPredictOnSpark.py')
+        print(coknnsvmtrainandpredictonspark_stdout.read())
         sendlog.emit("模型训练完成。")
