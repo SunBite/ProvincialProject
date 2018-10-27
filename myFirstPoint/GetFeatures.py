@@ -5,14 +5,12 @@ import skimage.io as skio
 import skimage.color as skcolor
 import numpy as np
 import math
-from skimage.feature import local_binary_pattern, greycomatrix, greycoprops
+from skimage.feature import local_binary_pattern, greycomatrix, greycoprops, hog, ORB
 import cv2 as cv
-
 
 """
 入口函数是 get_features(image_path)
 """
-
 
 # 初始化全局变量
 PI = math.pi
@@ -22,7 +20,14 @@ PI = math.pi
 # mapping['num'] = int(mapping['mapping_num'])
 
 mapping = {}
-mapping['table'] = np.array([0,1,1,2,1,9,2,3,1,9,9,9,2,9,3,4,1,9,9,9,9,9,9,9,2,9,9,9,3,9,4,5,1,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,2,9,9,9,9,9,9,9,3,9,9,9,4,9,5,6,1,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,2,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,3,9,9,9,9,9,9,9,4,9,9,9,5,9,6,7,1,2,9,3,9,9,9,4,9,9,9,9,9,9,9,5,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,6,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,7,2,3,9,4,9,9,9,5,9,9,9,9,9,9,9,6,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,7,3,4,9,5,9,9,9,6,9,9,9,9,9,9,9,7,4,5,9,6,9,9,9,7,5,6,9,7,6,7,7,8])
+mapping['table'] = np.array(
+    [0, 1, 1, 2, 1, 9, 2, 3, 1, 9, 9, 9, 2, 9, 3, 4, 1, 9, 9, 9, 9, 9, 9, 9, 2, 9, 9, 9, 3, 9, 4, 5, 1, 9, 9, 9, 9, 9,
+     9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 2, 9, 9, 9, 9, 9, 9, 9, 3, 9, 9, 9, 4, 9, 5, 6, 1, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9,
+     9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 2, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 3, 9,
+     9, 9, 9, 9, 9, 9, 4, 9, 9, 9, 5, 9, 6, 7, 1, 2, 9, 3, 9, 9, 9, 4, 9, 9, 9, 9, 9, 9, 9, 5, 9, 9, 9, 9, 9, 9, 9, 9,
+     9, 9, 9, 9, 9, 9, 9, 6, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9,
+     9, 7, 2, 3, 9, 4, 9, 9, 9, 5, 9, 9, 9, 9, 9, 9, 9, 6, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 7, 3, 4, 9, 5,
+     9, 9, 9, 6, 9, 9, 9, 9, 9, 9, 9, 7, 4, 5, 9, 6, 9, 9, 9, 7, 5, 6, 9, 7, 6, 7, 7, 8])
 mapping['table'] = mapping['table'].T
 mapping['samples'] = 8
 mapping['num'] = 10
@@ -43,20 +48,20 @@ def hsv_features(image_H, image_S, image_V, image_height, image_width):
     """
 
     # 分区域计算HSV直方图
-    t_feature = np.zeros(81)     # 初始化特征向量为0向量
+    t_feature = np.zeros(81)  # 初始化特征向量为0向量
 
     # 计算4x4区域中的第1列区域
-    for i in range(math.floor(image_height/4), math.floor(image_height*3/4)):
-        for j in range(math.floor(image_width/4)):
-            tmp_h = math.floor(image_H[i][j]/0.111112)
-            tmp_s = math.floor(image_S[i][j]/0.333334)
-            tmp_v = math.floor(image_V[i][j]/0.333334)
+    for i in range(math.floor(image_height / 4), math.floor(image_height * 3 / 4)):
+        for j in range(math.floor(image_width / 4)):
+            tmp_h = math.floor(image_H[i][j] / 0.111112)
+            tmp_s = math.floor(image_S[i][j] / 0.333334)
+            tmp_v = math.floor(image_V[i][j] / 0.333334)
             d = tmp_h * 9 + tmp_s * 3 + tmp_v
             t_feature[d] = t_feature[d] + 1
 
     # 计算4x4区域中的第4列区域
-    for i in range(math.floor(image_height/4), math.floor(image_height*3/4)):
-        for j in range(math.floor(image_width*3/4), math.floor(image_width)):
+    for i in range(math.floor(image_height / 4), math.floor(image_height * 3 / 4)):
+        for j in range(math.floor(image_width * 3 / 4), math.floor(image_width)):
             tmp_h = math.floor(image_H[i][j] / 0.111112)
             tmp_s = math.floor(image_S[i][j] / 0.333334)
             tmp_v = math.floor(image_V[i][j] / 0.333334)
@@ -64,8 +69,8 @@ def hsv_features(image_H, image_S, image_V, image_height, image_width):
             t_feature[d] = t_feature[d] + 1
 
     # 计算4x4区域中的第1行区域
-    for i in range(math.floor(image_height/4)):
-        for j in range(math.floor(image_width/4), math.floor(image_width*3/4)):
+    for i in range(math.floor(image_height / 4)):
+        for j in range(math.floor(image_width / 4), math.floor(image_width * 3 / 4)):
             tmp_h = math.floor(image_H[i][j] / 0.111112)
             tmp_s = math.floor(image_S[i][j] / 0.333334)
             tmp_v = math.floor(image_V[i][j] / 0.333334)
@@ -73,8 +78,8 @@ def hsv_features(image_H, image_S, image_V, image_height, image_width):
             t_feature[d] = t_feature[d] + 1
 
     # 计算4x4区域中的第4行区域
-    for i in range(math.floor(image_height*3/4), math.floor(image_height)):
-        for j in range(math.floor(image_width/4), math.floor(image_width*3/4)):
+    for i in range(math.floor(image_height * 3 / 4), math.floor(image_height)):
+        for j in range(math.floor(image_width / 4), math.floor(image_width * 3 / 4)):
             tmp_h = math.floor(image_H[i][j] / 0.111112)
             tmp_s = math.floor(image_S[i][j] / 0.333334)
             tmp_v = math.floor(image_V[i][j] / 0.333334)
@@ -89,7 +94,7 @@ def hsv_features(image_H, image_S, image_V, image_height, image_width):
             tmp_v = math.floor(image_V[i][j] / 0.333334)
             d = tmp_h * 9 + tmp_s * 3 + tmp_v
             t_feature[d] = t_feature[d] + 2
-    t_feature = t_feature/(image_height*image_width)
+    t_feature = t_feature / (image_height * image_width)
     return list(t_feature)
 
 
@@ -112,7 +117,7 @@ def apply_mapping(mat, mapping):
     single_result = []
     for i in result:
         single_result.extend(i)
-    result_dict = {k: single_result.count(k)/(mat.shape[0]*mat.shape[1]) for k in set(single_result)}
+    result_dict = {k: single_result.count(k) / (mat.shape[0] * mat.shape[1]) for k in set(single_result)}
     result = [result_dict[k] for k in result_dict]
     return result
 
@@ -132,13 +137,14 @@ def get_lbp(r, n, image_gray):
     image_width = image_gray.shape[1]
 
     lbp = local_binary_pattern(image_gray, n_points, radius)  # 提取LBP特征
-    lbp_vec = apply_mapping(lbp, mapping)                # 映射特征到特征向量
-    lbp_vec = np.array(lbp_vec)/(image_height*image_width)
+    lbp_vec = apply_mapping(lbp, mapping)  # 映射特征到特征向量
+    # lbp_vec = np.array(lbp_vec) / (image_height * image_width)
     return list(lbp_vec)
 
 
 def lbp_feature(image_gray):
     return get_lbp(2, 8, image_gray) + get_lbp(3, 8, image_gray) + get_lbp(4, 8, image_gray)
+
 
 """
 Tchebichef矩特征提取
@@ -148,9 +154,9 @@ Tchebichef矩特征提取
 
 
 def F(r, v, image_height, image_width, image):
-    x = int(r*math.cos(PI*v/180)+image_height/2)
-    y = int(r*math.sin(PI*v/180)+image_width/2)
-    f = float(image[x][y])/255
+    x = int(r * math.cos(PI * v / 180) + image_height / 2)
+    y = int(r * math.sin(PI * v / 180) + image_width / 2)
+    f = float(image[x][y]) / 255
     return f
 
 
@@ -159,7 +165,7 @@ def B(v, q, r, image_height, image_width, image):
     b2 = F(r, 1, image_height, image_width, image)
 
     for i in range(2, 359):
-        b1 = F(r, v, image_height, image_width, image)+b2*2*math.cos(q)-b1
+        b1 = F(r, v, image_height, image_width, image) + b2 * 2 * math.cos(q) - b1
         temp = b1
         b1 = b2
         b2 = temp
@@ -170,9 +176,10 @@ def T(p, r, N):
     if p == 0:
         t = 1
     elif p == 1:
-        t = (2*r+1-N)/N
+        t = (2 * r + 1 - N) / N
     else:
-        t = ((2*p-1)*(2*r+1-N)/N*T(p-1, r, N)-(p-1)*T(p-2, r, N)*(N**p-(p-1)**2))/p/N**p
+        t = ((2 * p - 1) * (2 * r + 1 - N) / N * T(p - 1, r, N) - (p - 1) * T(p - 2, r, N) * (
+                N ** p - (p - 1) ** 2)) / p / N ** p
     return t
 
 
@@ -186,15 +193,15 @@ def fast_tchebichef(p, q, image_height, image_width, image):
     :param image: 灰度图像
     :return:
     """
-    m = int(min(image_height/2-1, image_width/2-1))
+    m = int(min(image_height / 2 - 1, image_width / 2 - 1))
     sum = 0
-    I = math.cos(q*358*PI/180)
-    K = math.cos(q*359*PI/180)
+    I = math.cos(q * 358 * PI / 180)
+    K = math.cos(q * 359 * PI / 180)
     for i in range(m):
         b1, b2 = B(358, q, i, image_height, image_width, image)
-        sum = sum+(b2*I+F(i, 359, image_height, image_width, image)*K
-                   - F(i, 0, image_height, image_width, image)-b1*K)*T(p, i, image_width)
-    S = sum/360
+        sum = sum + (b2 * I + F(i, 359, image_height, image_width, image) * K
+                     - F(i, 0, image_height, image_width, image) - b1 * K) * T(p, i, image_width)
+    S = sum / 360
     return S
 
 
@@ -231,7 +238,8 @@ def glcm_feature(image_gray):
                           int(greycoprops(image_glcm, 'energy')),
                           int(greycoprops(image_glcm, 'ASM')),
                           int(greycoprops(image_glcm, 'correlation'))]
-    image_glcm_feature = (image_glcm_feature-np.min(image_glcm_feature))/(np.max(image_glcm_feature)-np.min(image_glcm_feature))
+    # image_glcm_feature = (image_glcm_feature - np.min(image_glcm_feature)) / (
+    #         np.max(image_glcm_feature) - np.min(image_glcm_feature))
     return list(image_glcm_feature)
 
 
@@ -243,23 +251,50 @@ def glcm_feature(image_gray):
 def get_features(image):
     # 图像预处理
     # image = skio.imread(image_path)  # 载入图像
-    image_gray = cv.cvtColor(image, cv.COLOR_BGR2GRAY)       # 原始图像转换为灰度图像
-    image_hsv = cv.cvtColor(image, cv.COLOR_BGR2HLS_FULL)    # 原始图像转换为HSV图像
+    image_gray = cv.cvtColor(image, cv.COLOR_BGR2GRAY)  # 原始图像转换为灰度图像
+    image_hsv = cv.cvtColor(image, cv.COLOR_BGR2HLS_FULL)  # 原始图像转换为HSV图像
     image_hsv_H = np.array(image_hsv[:, :, 0]) / 255  # HSV色调（Hue）分量
     image_hsv_S = np.array(image_hsv[:, :, 1]) / 255  # HSV饱和度(Saturation)分量
     image_hsv_V = np.array(image_hsv[:, :, 2]) / 255  # HSV亮度（Value）分量
-    image_height = image.shape[0]         # 图像的高度值
-    image_width = image.shape[1]          # 图像的宽度值
+    image_height = image.shape[0]  # 图像的高度值
+    image_width = image.shape[1]  # 图像的宽度值
 
     # 颜色特征提取
     return [hsv_features(image_hsv_H, image_hsv_S, image_hsv_V, image_height, image_width),
-           glcm_feature(image_gray),
-           tchebichef_features(image_gray, image_height, image_width),
-           lbp_feature(image_gray)]
+            glcm_feature(image_gray),
+            tchebichef_features(image_gray, image_height, image_width),
+            lbp_feature(image_gray)]
+
+
+def hog_feature(image):
+    """
+    提取图像的hog特征
+    :param image:
+    :return:
+    """
+    image = cv.resize(image, (32, 32))
+    image_gray = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
+    feature = hog(image_gray, orientations=9, pixels_per_cell=[8, 8], cells_per_block=[2, 2], visualise=False,
+                  transform_sqrt=True)
+    return feature
+
+
+def orb_feature(image):
+    """
+    提取图像的orb特征
+    :param image:
+    :return:
+    """
+    image_gray = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
+    orb = ORB(n_keypoints=50)
+    orb.detect_and_extract(image_gray)
+    descriptors = orb.descriptors
+    keypoints = orb.keypoints
+    return keypoints
 
 
 def _122feature(full_feature):
-    return full_feature[0]+full_feature[1]+full_feature[2]+full_feature[3]
+    return full_feature[0] + full_feature[1] + full_feature[2] + full_feature[3]
 
 
 def _81feature(full_feature):
@@ -267,15 +302,27 @@ def _81feature(full_feature):
 
 
 def _30_5_6feature(full_feature):
-    return full_feature[3]+full_feature[2]+full_feature[1]
+    return full_feature[3] + full_feature[2] + full_feature[1]
 
 
 def _81_5_6feature(full_feature):
-    return full_feature[0]+full_feature[2]+full_feature[1]
+    return full_feature[0] + full_feature[2] + full_feature[1]
 
 
 def _30feature(full_feature):
     return full_feature[3]
+
+
+def _5_6feature(full_feature):
+    return full_feature[2] + full_feature[1]
+
+
+def _5feature(full_feature):
+    return full_feature[2]
+
+
+def _6feature(full_feature):
+    return full_feature[1]
 
 # 测试脚本
 # if __name__ == '__main__':

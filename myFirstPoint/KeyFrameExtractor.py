@@ -70,23 +70,30 @@ class KeyFrameExtractor:
                     for keyindex in range(len(self.__frames)):
                         currentframe = self.__frames[keyindex]
                         if os.path.isdir(self.__savepath):
+                            filepathandnamelist = filepathandname.split(os.sep)
                             # 存储关键帧的路径和名字
-                            framename = os.path.abspath(self.__savepath) + os.sep + \
-                                        os.path.basename(os.path.dirname(filepathandname)) + "_" + \
-                                        os.path.basename(filepathandname).split(".")[0] + \
-                                        '_keyFrame_' + str(keyindex) + '.jpg'
+                            framedir = os.path.abspath(self.__savepath) + os.sep + filepathandnamelist[-3] + os.sep + \
+                                       filepathandnamelist[-2]
+                            framename = framedir + os.sep + filepathandnamelist[-3] + "_" + \
+                                        filepathandnamelist[-1].split(".")[0] + '_keyFrame_' + str(keyindex) + '.jpg'
+
+                            if not os.path.isdir(framedir):
+                                os.makedirs(framedir)
                             cv2.imwrite(framename, currentframe)
                         else:
                             print(" Please input the correct save path!")
         else:
             print(" you inputted file is not existed!")
+
+
 if __name__ == '__main__':
     starttime = datetime.datetime.now()
-    KeyFrameExtractor = KeyFrameExtractor(r"/home/sunbite/video/action_youtube_naudio", r"/home/sunbite/video/keyframe2")
+    KeyFrameExtractor = KeyFrameExtractor(r"/home/sunbite/video/action_youtube/", r"/home/sunbite/keyframe")
     KeyFrameExtractor.keyframeextractor()
     endtime = datetime.datetime.now()
     print('----------------------------------------------------------------------------')
     print('----------------------------------------------------------------------------')
-    print('-----------------KeyFrameExtractor Running time: %s Seconds-----------------' % (endtime - starttime).seconds)
+    print(
+        '-----------------KeyFrameExtractor Running time: %s Seconds-----------------' % (endtime - starttime).seconds)
     print('----------------------------------------------------------------------------')
     print('----------------------------------------------------------------------------')

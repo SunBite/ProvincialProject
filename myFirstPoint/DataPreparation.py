@@ -3,6 +3,7 @@ import os
 from sklearn.model_selection import train_test_split
 from sklearn.svm import SVC
 import numpy as np
+import random
 
 
 class DataPreparation:
@@ -18,27 +19,73 @@ class DataPreparation:
         :param path:文件夹路径
         :return: 有标签数据的标签和名字Tuplelist，无标签数据的标签和名字Tuplelist，测试集数据的标签和名字Tuplelist
         """
-        nameList = []
-        labelList = []
-        if os.path.isdir(path):
-            # 遍历文件夹
-            for dirpath, dirnames, filenames in os.walk(path):
-                for filename in filenames:
-                    labelIndex = self.__classmap[filename.split("_v")[0]]
-                    nameList.append(filename)
-                    labelList.append(labelIndex)
-            # 训练集和测试集比例为9：1
-            train_x, test_x, train_y, test_y = train_test_split(nameList, labelList, test_size=0.1, stratify=labelList)
-            # 在训练集中的有标签数据和无标签数据比例为2：7
-            unlabeled_x, labeled_x, unlabeled_y, labeled_y = train_test_split(train_x, train_y, test_size=0.222,
-                                                                              stratify=train_y)
-            # 有标签数据的标签和名字的Tuplelist
-            Label_Name_Labeled_train_tuple_list = self.__get_Y_X_tuple_list(labeled_y, labeled_x)
-            # 无标签数据的标签和名字Tuplelist
-            Label_Name_Unlabeled_train_tuple_list = self.__get_Y_X_tuple_list(unlabeled_y, unlabeled_x)
-            # 测试集数据的标签和名字Tuplelist
-            Label_Name_test_tuple_list = self.__get_Y_X_tuple_list(test_y, test_x)
-            return Label_Name_Labeled_train_tuple_list, Label_Name_Unlabeled_train_tuple_list, Label_Name_test_tuple_list
+
+        classnames = ["basketball", "biking", "diving", "golf_swing", "horse_riding",
+                      "soccer_juggling", "swing", "tennis_swing", "trampoline_jumping",
+                      "volleyball_spiking", "walking"]
+        testandtrains = ["test", "train"]
+        trainnameList = []
+        trainlabelList = []
+        testnameList = []
+        testlabelList = []
+        for classname in classnames:
+            for testandtrain in testandtrains:
+                if testandtrain is "train":
+                    featurePath = path + classname + os.sep + testandtrain + os.sep + "hogvideoFeature"
+                    # 遍历文件夹
+                    for dirpath, dirnames, filenames in os.walk(featurePath):
+                        for filename in filenames:
+                            labelIndex = self.__classmap[filename.split("_v")[0]]
+                            trainnameList.append(filename)
+                            trainlabelList.append(labelIndex)
+                if testandtrain is "test":
+                    featurePath = path + classname + os.sep + testandtrain + os.sep + "hogvideoFeature"
+                    # 遍历文件夹
+                    for dirpath, dirnames, filenames in os.walk(featurePath):
+                        for filename in filenames:
+                            labelIndex = self.__classmap[filename.split("_v")[0]]
+                            testnameList.append(filename)
+                            testlabelList.append(labelIndex)
+        # 训练集和测试集比例为9：1
+        unlabeled_x, labeled_x, unlabeled_y, labeled_y = train_test_split(trainnameList, trainlabelList,
+                                                                          test_size=0.6,
+                                                                          stratify=trainlabelList, random_state=2)  # 2 0.234
+        # 有标签数据的标签和名字的Tuplelist
+        Label_Name_Labeled_train_tuple_list = self.__get_Y_X_tuple_list(labeled_y, labeled_x)
+        # 无标签数据的标签和名字Tuplelist
+        Label_Name_Unlabeled_train_tuple_list = self.__get_Y_X_tuple_list(unlabeled_y, unlabeled_x)
+
+        random_index = [i for i in range(len(testnameList))]
+        random.shuffle(random_index)
+        test_x = [testnameList[x] for x in random_index]
+        test_y = [testlabelList[x] for x in random_index]
+
+        # 测试集数据的标签和名字Tuplelist
+        Label_Name_test_tuple_list = self.__get_Y_X_tuple_list(test_y, test_x)
+        return Label_Name_Labeled_train_tuple_list, Label_Name_Unlabeled_train_tuple_list, Label_Name_test_tuple_list
+
+        # 1 == 1
+        #
+        # if os.path.isdir(path):
+        #     # 遍历文件夹
+        #     for dirpath, dirnames, filenames in os.walk(path):
+        #         for filename in filenames:
+        #             labelIndex = self.__classmap[filename.split("_v")[0]]
+        #             nameList.append(filename)
+        #             labelList.append(labelIndex)
+        #     # 训练集和测试集比例为9：1
+        #     train_x, test_x, train_y, test_y = train_test_split(nameList, labelList, test_size=0.1, stratify=labelList,
+        #                                                         random_state=5)  # 5
+        #     # 在训练集中的有标签数据和无标签数据比例为2：7
+        #     unlabeled_x, labeled_x, unlabeled_y, labeled_y = train_test_split(train_x, train_y, test_size=0.222,
+        #                                                                       stratify=train_y, random_state=5)  # 5
+        #     # 有标签数据的标签和名字的Tuplelist
+        #     Label_Name_Labeled_train_tuple_list = self.__get_Y_X_tuple_list(labeled_y, labeled_x)
+        #     # 无标签数据的标签和名字Tuplelist
+        #     Label_Name_Unlabeled_train_tuple_list = self.__get_Y_X_tuple_list(unlabeled_y, unlabeled_x)
+        #     # 测试集数据的标签和名字Tuplelist
+        #     Label_Name_test_tuple_list = self.__get_Y_X_tuple_list(test_y, test_x)
+        #     return Label_Name_Labeled_train_tuple_list, Label_Name_Unlabeled_train_tuple_list, Label_Name_test_tuple_list
 
     # def getLabelAndUnlabelAndTestTupleList(self, featureDirPath):
     #     """
@@ -54,7 +101,7 @@ class DataPreparation:
     #     labelAndFeatureUnlabeledTupleList = self.__get_Y_X_tuple_list(unlabeled_y, unlabeled_x)
     #     return labelAndFeatureLabeledTupleList, labelAndFeatureUnlabeledTupleList, labelAndFeatureTestTupleList
 
-    def loadData(self, featureDirPath, tupleList):
+    def loadData(self, featureDirPath, featureDir, tupleList):
         """
         获取标签和特征tuplelist
         :param featureDirPath:特征文件夹地址
@@ -64,7 +111,7 @@ class DataPreparation:
         # 标签和特征元组list
         labelAndFeatureAndNameTupleList = []
         for Label_Name_tuple in tupleList:
-            featurePath = featureDirPath + Label_Name_tuple[1]
+            featurePath = featureDirPath + Label_Name_tuple[1].split("_v")[0] + featureDir + Label_Name_tuple[1]
             # 读取特征和标签组成元组
             labelAndFeatureAndNameTuple = (Label_Name_tuple[0], np.loadtxt(featurePath), Label_Name_tuple[1])
             labelAndFeatureAndNameTupleList.append(labelAndFeatureAndNameTuple)
