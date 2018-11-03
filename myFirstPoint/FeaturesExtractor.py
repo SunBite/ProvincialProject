@@ -171,8 +171,8 @@ if __name__ == '__main__':
     #     r"/home/sunbite/features_new_1").featuresExtractor()
 
     fe.FeaturesExtractor(
-        r"/home/sunbite/keyframe/",
-        r"/home/sunbite/features_new_1/").getAllVideoFeature()
+        r"/home/sunbite/MFSSEL/keyframe/",
+        r"/home/sunbite/MFSSEL/features_new_1/").getAllVideoFeature()
     endtime = datetime.datetime.now()
     print('----------------------------------------------------------------------------')
     print('----------------------------------------------------------------------------')
