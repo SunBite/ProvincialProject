@@ -28,6 +28,8 @@ def MFSSEL(featureNameDirPath, savePath=None, trainAndTestFlag="train"):
     topk = 5
     # 迭代次数
     loop_num = 100
+    # 有标签数据集大小list
+    label_data_num_list = []
     # 训练
     if trainAndTestFlag == "train":
         # 初始化dataPreparation对象
@@ -89,6 +91,9 @@ def MFSSEL(featureNameDirPath, savePath=None, trainAndTestFlag="train"):
         # _30_labeled_train_Y.extend(_30_unlabeled_Y)
 
         for h in range(1, loop_num + 1):
+            print("有标签数据集大小：")
+            label_data_num_list.append(len(hog_labeled_train_Y))
+            print(label_data_num_list)
             # hog维svm训练
             hog_svc_1 = SVC(C=4, kernel='rbf', gamma=2, probability=True)  # c:4 gamma=2
             hog_svc_1.fit(hog_labeled_train_X, hog_labeled_train_Y)
@@ -190,8 +195,8 @@ def MFSSEL(featureNameDirPath, savePath=None, trainAndTestFlag="train"):
                 hog_real_Y.append(hog_unlabeled_Y[i])
                 _81_real_Y.append(_81_unlabeled_Y[i])
                 _30_real_Y.append(_30_unlabeled_Y[i])
-            print(hog_real_Y)
-            print(voted_Y_list)
+            # print(hog_real_Y)
+            # print(voted_Y_list)
             for i in range(len(voted_index_list)):
                 hog_labeled_train_X.append(hog_unlabeled_X[voted_index_list[i]])
                 hog_labeled_train_Y.append(voted_Y_list[i])
@@ -199,7 +204,6 @@ def MFSSEL(featureNameDirPath, savePath=None, trainAndTestFlag="train"):
                 _81_labeled_train_Y.append(voted_Y_list[i])
                 _30_labeled_train_X.append(_30_unlabeled_X[voted_index_list[i]])
                 _30_labeled_train_Y.append(voted_Y_list[i])
-            print(len(hog_labeled_train_Y))
 
             hog_unlabeled_X = [i for j, i in enumerate(hog_unlabeled_X) if j not in voted_index_list]
             hog_unlabeled_Y = [i for j, i in enumerate(hog_unlabeled_Y) if j not in voted_index_list]

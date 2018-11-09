@@ -6,7 +6,6 @@ import numpy as np
 import math
 from skimage.feature import local_binary_pattern, greycomatrix, greycoprops, hog, ORB
 import cv2 as cv
-
 orbFeatureDir = "/home/sunbite/features_new/orbvideoFeature/"
 hogFeatureDir = "/home/sunbite/features_new/hogvideoFeature/"
 _81FeatureDir = "/home/sunbite/features/_81videoFeature/"

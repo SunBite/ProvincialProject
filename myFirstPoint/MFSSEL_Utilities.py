@@ -69,22 +69,84 @@ def get_confidence(probilities, para):
         confidence = (1 - para) * (max_p - sub_max_p) + para * (max_p - avg_except_max_p)
     return confidence
 
-#
-# def get_confidence_1(probilities):
-#     """
-#     计算置信度
-#     :param probilities: 类别的概率
-#     :return: confidence_svm 置信度
-#     """
-#     if np.size(probilities) == 1:
-#         confidence = 1
-#     else:
-#         probilities = np.array(probilities)
-#         result = probilities[np.argsort(-probilities)]
-#         max_p = result[0]
-#         sub_max_p = result[1]
-#         confidence = max_p - sub_max_p
-#     return confidence
+
+def get_confidence_1(probilities):
+    """
+    计算置信度
+    :param probilities: 类别的概率
+    :return: confidence_svm 置信度
+    """
+    if np.size(probilities) == 1:
+        confidence = 1
+    else:
+        probilities = np.array(probilities)
+        result = probilities[np.argsort(-probilities)]
+        max_p = result[0]
+        sub_max_p = result[1]
+        confidence = max_p - sub_max_p
+    return confidence
+
+
+def get_confidence_3(probilities):
+    """
+    计算置信度
+    :param probilities: 类别的概率
+    :return: confidence_svm 置信度
+    """
+    if np.size(probilities) == 1:
+        confidence = 1
+    else:
+        probilities = np.array(probilities)
+        result = probilities[np.argsort(-probilities)]
+        max_p = result[0]
+        confidence = max_p
+    return confidence
+
+
+def get_confidence_selfTraining_index(probilities_list, topk):
+    """
+    获取SVM置信度较高的索引
+    :param probilities_list:
+    :param num:
+    :return:
+    """
+    # 置信list
+    confidence_list = []
+    confidence_list_temp = []
+    ind_confidence_list = []
+    ind_confidence_list_temp = []
+    ind_confidence_list_backup = []
+    for probility in probilities_list:
+        confidence_list.append(get_confidence_3(probility))
+
+    confidence_list = np.array(confidence_list)
+    ind_confidence_list_temp = np.argsort(-confidence_list)
+    sorted_confidence_list = confidence_list[ind_confidence_list_temp]
+    for i in range(len(confidence_list)):
+        if confidence_list[i] > 0.58:
+            ind_confidence_list.append(i)
+
+    if len(ind_confidence_list) == 0:
+        ind_confidence_list_backup_temp = [j for j, i in enumerate(confidence_list) if j not in ind_confidence_list]
+        for i in ind_confidence_list_backup_temp:
+            confidence_list_temp.append(confidence_list[i])
+        confidence_list_temp = np.array(confidence_list_temp)
+        ind_sorted_confidence_list_temp = np.argsort(-confidence_list_temp)
+        ind_confidence_list_backup_temp = np.array(ind_confidence_list_backup_temp)
+        ind_sorted_confidence_list_backup_temp = ind_confidence_list_backup_temp[ind_sorted_confidence_list_temp]
+
+
+        for i in range(topk):
+            ind_confidence_list_backup.append(ind_sorted_confidence_list_backup_temp[i])
+
+    # if num > len(ind_confidence_list):
+    #     num = len(ind_confidence_list)
+    # for i in range(num):
+    #     ind_confidence_list.append(ind_confidence_list[i])
+
+    return ind_confidence_list, ind_confidence_list_backup
+
+
 #
 #
 # def get_confidence_2(probilities):
@@ -160,7 +222,7 @@ def vote(predict_Y_list, real_unlabeled_Y, whole_class, topk):
     :return: 投票之后的结果标签list
     """
     sameLableNum = 0
-    num = 0
+    num = 0.4
     hog_svc_predict_Y, _81_svc_predict_Y, _30_svc_predict_Y = predict_Y_list
     hog_svc_predict_Y = np.array(hog_svc_predict_Y)
     _81_svc_predict_Y = np.array(_81_svc_predict_Y)
@@ -181,7 +243,7 @@ def vote(predict_Y_list, real_unlabeled_Y, whole_class, topk):
             voted_predict_Y_list.append(hog_svc_predict_Y[i])
             # voted_predict_Y_list.append(hog_unlabeled_Y[i])
             continue
-        if (hog_svc_predict_Y[i] == _30_svc_predict_Y[i]== _30_unlabeled_Y[i]):
+        if (hog_svc_predict_Y[i] == _30_svc_predict_Y[i] == _30_unlabeled_Y[i]):
             voted_index_result.append(i)
             voted_predict_Y_list.append(hog_svc_predict_Y[i])
             # voted_predict_Y_list.append(hog_unlabeled_Y[i])
@@ -196,7 +258,7 @@ def vote(predict_Y_list, real_unlabeled_Y, whole_class, topk):
             sameLableNum = sameLableNum + 1
 
     if ((len(voted_index_result) == 0) and (len(_30_unlabeled_Y) is not 0)) or (
-            sameLableNum / len(voted_predict_Y_list)) < 0.7:
+            sameLableNum / len(voted_predict_Y_list)) < num:
 
         if len(_30_unlabeled_Y) > whole_class * topk:
             num = whole_class * topk
